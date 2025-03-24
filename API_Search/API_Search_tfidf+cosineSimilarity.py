@@ -31,7 +31,7 @@ def preprocess_text(text):
 df['processed_title'] = df['title'].apply(preprocess_text)
 
 # Preprocess the target
-target = "tân tâm"
+target = "chiến"
 processed_target = preprocess_text(target)
 
 # Vectorize the titles and the target using TF-IDF
@@ -54,7 +54,7 @@ top_results = df[['title', 'image', 'link', 'similarity']].head(10)
 
 # Convert to JSON and save to file with pretty formatting
 top_results_json = top_results.to_json(orient='records', force_ascii=False)
-with open('top_results.json', 'w', encoding='utf-8') as f:
+with open('top_results_tfidf+cosine.json', 'w', encoding='utf-8') as f:
     json.dump(json.loads(top_results_json), f, ensure_ascii=False, indent=4)
 
-print("Results have been saved to top_results.json")
+print("Results have been saved to top_results_tfidf+cosine.json")
