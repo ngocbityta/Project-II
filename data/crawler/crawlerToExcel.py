@@ -11,7 +11,6 @@ import time
 import random
 
 def crawNewsData():
-    CHROMEDRIVER_PATH = "/usr/local/bin/chromedriver"
 
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -27,7 +26,7 @@ def crawNewsData():
     options.add_argument("--disable-extensions")
     options.add_argument(f"user-agent={random.choice(user_agents)}")
 
-    service = Service(CHROMEDRIVER_PATH)
+    service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
 
     url = "https://lite.baomoi.com/"
