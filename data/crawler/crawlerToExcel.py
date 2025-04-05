@@ -59,7 +59,7 @@ def crawNewsData():
 
     return data
 
-def save_to_excel(data, filename="news.xlsx"):
+def save_to_excel(data, filename="../raw-data/news.xlsx"):
     df = pd.DataFrame(data)
     df.to_excel(filename, index=False, engine='openpyxl')
 
