@@ -1,13 +1,15 @@
 import json
 import glob
 import os
+import re
 import underthesea
 from gensim.models import Word2Vec
 
 # === Thiết lập cố định ===
 INPUT_PATH = "../../raw-data/news.txt"
-OUTPUT_PATH = "vector.json"
+OUTPUT_PATH = "../../trained-data/vector.json"
 REMOVE_STOP_WORDS = True
+REMOVE_PUNCTUATION = True
 STOP_WORDS_FILE = "../../raw-data/stopwords.txt"
 
 # === Xử lý danh sách file ===
@@ -30,14 +32,20 @@ for file in listOfFiles:
     with open(file, 'r', encoding='utf-8') as f:
         text = f.readlines() 
         sentences.extend(text)
-        
-    if REMOVE_STOP_WORDS:
-        for i in range(len(sentences)):
-            sentences[i] = ' '.join([word for word in sentences[i].split() if word not in stop_words])
 
+    # === Làm sạch câu ===
+    for i in range(len(sentences)):
+        sentence = sentences[i].strip()
+        sentence = sentence.lower()
+        if REMOVE_PUNCTUATION:
+            sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
+        if REMOVE_STOP_WORDS:
+            sentence = ' '.join([word for word in sentence.split() if word not in stop_words])
+        sentences[i] = sentence
+
+    # === Tách từ dùng underthesea ===
     for sentence in sentences:
         words = underthesea.word_tokenize(sentence)
-        print(words)
         final_sentences.append(words)
 
 # === Huấn luyện Word2Vec ===
@@ -47,6 +55,6 @@ model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=5, worker
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}
 
 with open(OUTPUT_PATH, "w") as out_file:
-   json.dump(vectors, out_file, indent=2)
+    json.dump(vectors, out_file, indent = 2, ensure_ascii = False)
 
 print(f"Training complete. Word vectors saved to {OUTPUT_PATH}")
