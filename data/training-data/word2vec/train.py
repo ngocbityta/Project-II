@@ -5,12 +5,14 @@ import re
 import underthesea
 from gensim.models import Word2Vec
 
-# === Thiết lập cố định ===
-INPUT_PATH = "../../raw-data/news.txt"
-OUTPUT_PATH = "../../trained-data/vector.json"
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
+OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/vector.json")
+STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
-STOP_WORDS_FILE = "../../raw-data/stopwords.txt"
 
 # === Xử lý danh sách file ===
 listOfFiles = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PATH + '/*.txt')
@@ -54,7 +56,22 @@ model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=5, worker
 # === Chuyển sang JSON và lưu ===
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}
 
-with open(OUTPUT_PATH, "w") as out_file:
-    json.dump(vectors, out_file, indent = 2, ensure_ascii = False)
+try:
+    with open(OUTPUT_PATH, "w") as out_file:
+        json.dump(vectors, out_file, indent=2, ensure_ascii=False)
 
-print(f"Training complete. Word vectors saved to {OUTPUT_PATH}")
+    # Trả về kết quả thành công
+    result = {
+        "message": "Training complete. Word vectors saved.",
+        "status": "success"
+    }
+except Exception as e:
+    # Trả về thông báo lỗi nếu có lỗi xảy ra
+    result = {
+        "error": "Failed to save Word2Vec vectors",
+        "details": str(e),
+        "status": "fail"
+    }
+
+# In kết quả dưới dạng JSON
+print(json.dumps(result, ensure_ascii=False, indent=4))
