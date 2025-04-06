@@ -31,10 +31,10 @@ def run_script(script_path, args=[]):
     except Exception as e:
         return None, str(e)
 
-@app.route('/run-crawler', methods=['POST'])
+@app.route('/crawl-data', methods=['POST'])
 def run_crawler():
     try:
-        data = request.get_json()
+        data = request.get_json() if request.is_json else {}
         number_of_scroll = data.get('numberOfScroll', 1)
 
         script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/crawler/crawlerToExcel.py'))
@@ -90,7 +90,7 @@ def train_model():
 @app.route('/get-word2vec-result', methods=['POST'])
 def get_word2vec_result():
     try:
-        data = request.get_json()
+        data = request.get_json() if request.is_json else {}
         sentence = data.get('sentence', '')
 
         if not sentence:
