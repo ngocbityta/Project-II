@@ -41,7 +41,7 @@ df['clean_title'] = df['title'].apply(preprocess_text)
 df['bert_embedding'] = df['clean_title'].apply(get_bert_embedding)
 
 # Tiêu đề truy vấn (có thể bị sai chính tả)
-target = "cheens dick"  # Giả sử nhập sai chính tả
+target = "chiến"  # Giả sử nhập sai chính tả
 target = preprocess_text(target)  # Chuẩn hóa trước
 
 # Nếu từ không có trong danh sách, tìm từ gần đúng nhất
@@ -67,7 +67,7 @@ df['tfidf_score'] = tfidf_scores
 alpha = 0.5  # Điều chỉnh mức độ ưu tiên giữa TF-IDF và BERT
 
 # Kết hợp hai điểm số
-df['final_score'] = alpha * df['tfidf_score'] + (1 - alpha) * df['bert_score']
+df['final_score'] = alpha * df['tfidf_score'] + (1 - alpha) * df['bert_score'] - 0.1
 
 # Sắp xếp theo điểm số cuối cùng
 df = df.sort_values(by='final_score', ascending=False)
@@ -80,4 +80,4 @@ top_results_json = top_results.to_json(orient='records', force_ascii=False)
 with open('top_results_TFIDF_BERT.json', 'w', encoding='utf-8') as f:
     json.dump(json.loads(top_results_json), f, ensure_ascii=False, indent=4)
 
-print(f"Results have been saved to top_results_TFIDF_BERT.json\nCorrected target: {target}")
+print(f"Results have been saved to top_results_TFIDF_BERT.json")
