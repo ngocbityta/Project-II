@@ -21,9 +21,14 @@ const SearchBar = () => {
 
     try {
       const response = await axios.post(`${API_URL}/get-word2vec-result`, {
-        params: { query },
+        sentence: query,
       });
-      setResults(response.data.results);
+      // Assuming the response structure you mentioned
+      if (response.data.output && response.data.output.similarities) {
+        setResults(response.data.output.similarities);
+      } else {
+        setMessage('No results found');
+      }
     } catch (error) {
       setMessage(`Error searching data: ${error.message}`);
     } finally {
@@ -86,7 +91,10 @@ const SearchBar = () => {
                 key={index}
                 className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
               >
-                {result}
+                <div>
+                  <p className="font-medium text-gray-700">{result.sentence}</p>
+                  <p className="text-sm text-gray-500">Cosine similarity: {result.cosine_similarity.toFixed(3)}</p>
+                </div>
               </li>
             ))}
           </ul>
