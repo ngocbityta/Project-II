@@ -8,10 +8,10 @@ from gensim.models import Word2Vec
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
-OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/vector.json")
+OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/word2vec/vector.json")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
 
-REMOVE_STOP_WORDS = True
+REMOVE_STOP_WORDS = False
 REMOVE_PUNCTUATION = True
 
 # === Xử lý danh sách file ===
@@ -38,7 +38,6 @@ for file in listOfFiles:
     # === Làm sạch câu ===
     for i in range(len(sentences)):
         sentence = sentences[i].strip()
-        sentence = sentence.lower()
         if REMOVE_PUNCTUATION:
             sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
         if REMOVE_STOP_WORDS:
@@ -51,7 +50,7 @@ for file in listOfFiles:
         final_sentences.append(words)
 
 # === Huấn luyện Word2Vec ===
-model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=5, workers=4)
+model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=1, workers=4)
 
 # === Chuyển sang JSON và lưu ===
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}
