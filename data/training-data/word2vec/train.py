@@ -8,7 +8,7 @@ from gensim.models import Word2Vec
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
-OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/vector.json")
+OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/word2vec/vector.json")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
 
 REMOVE_STOP_WORDS = True
