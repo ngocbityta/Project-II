@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import re
 import string
+import sys
 from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -14,7 +15,6 @@ STOPWORDS_FILE = os.path.join(CURRENT_DIR, '../../raw-data/stopwords.txt')
 VECTORIZER_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/tfidf_vectorizer.pkl')
 TFIDF_MATRIX_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/tfidf_matrix.npz')
 PROCESSED_DF_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/processed_news.pkl')
-OUTPUT_JSON_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/tfidf+cosine.json')
 
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
@@ -28,10 +28,9 @@ if REMOVE_STOP_WORDS:
             stopwords_list.sort(key=lambda x: len(x.split()), reverse=True)
     except FileNotFoundError:
         print(json.dumps({
-            "error": f"File {STOPWORDS_FILE} not found. Please ensure the file exists.",
-            "status": "fail"
-        }, ensure_ascii=False, indent=4))
-        exit(1)
+            "error": f"File {STOPWORDS_FILE} not found. Please ensure the file exists."
+        }, ensure_ascii=False))
+        sys.exit(1)
 
 # === Tiền xử lý truy vấn ===
 def preprocess_text(text):
@@ -48,38 +47,40 @@ def preprocess_text(text):
 
 # === Main logic ===
 def main():
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "No query provided."}, ensure_ascii=False))
+        sys.exit(1)
+
     try:
-        query = "thành công"
+        query = sys.argv[1]
         processed_query = preprocess_text(query)
 
-        # Load model và dữ liệu
+        # Load vectorizer, tfidf matrix, và dataframe
         with open(VECTORIZER_PATH, 'rb') as f:
             vectorizer = pickle.load(f)
         tfidf_matrix = load_npz(TFIDF_MATRIX_PATH)
         df = pd.read_pickle(PROCESSED_DF_PATH)
 
-        # Vector hóa truy vấn và tính similarity
+        # Tính similarity
         tfidf_query = vectorizer.transform([processed_query])
-        similarities = cosine_similarity(tfidf_query, tfidf_matrix).flatten() * 100
-        df['similarity'] = similarities
-        df = df.sort_values(by='similarity', ascending=False)
+        similarities = cosine_similarity(tfidf_query, tfidf_matrix).flatten()
 
-        # Lọc và lưu kết quả
-        top_results = df[df['similarity'] > 0][['title', 'image', 'link', 'similarity']].head(100)
+        result = []
+        for idx, sim in enumerate(similarities):
+            if sim > 0:
+                result.append({
+                    "cosine_similarity": float(sim),
+                    "sentence": df.iloc[idx]["title"]
+                })
 
-        with open(OUTPUT_JSON_PATH, 'w', encoding='utf-8') as f:
-            json.dump(top_results.to_dict(orient='records'), f, ensure_ascii=False, indent=4)
+        # Sắp xếp giảm dần
+        result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
 
-        print(json.dumps({
-            "message": "Top kết quả đã được lưu vào tfidf+cosine.json",
-            "status": "success"
-        }, ensure_ascii=False, indent=4))
+        print(json.dumps({"similarities": result}, ensure_ascii=False))
 
     except Exception as e:
-        print(json.dumps({
-            "error": str(e),
-            "status": "fail"
-        }, ensure_ascii=False, indent=4))
+        print(json.dumps({"error": str(e)}), ensure_ascii=False)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
