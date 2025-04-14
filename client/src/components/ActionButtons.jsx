@@ -1,64 +1,62 @@
-import { useState } from 'react';
-import axios from 'axios';
+import { useState } from "react";
+import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ActionButtons = () => {
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState('');
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState("");
 
   const handleAction = async (actionName, endpoint) => {
     setLoading(actionName);
-    setMessage('');
+    setMessage("");
 
     try {
       const response = await axios.post(`${API_URL}/${endpoint}`);
-      setMessage(response.data.message);
+      const data = response.data;
+
+      if (data.output?.status === "fail") {
+        setMessage(
+          `${actionName} failed: ${data.output.error || "Unknown error"}`
+        );
+      } else {
+        setMessage(`✅ ${data.message}`);
+      }
     } catch (error) {
       setMessage(`Error during ${actionName.toLowerCase()}: ${error.message}`);
     } finally {
-      setLoading('');
+      setLoading("");
     }
   };
 
   return (
     <div className="max-w-xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10 text-center">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Data Actions</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+        Data Actions
+      </h2>
       <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
         <button
-          onClick={() => handleAction('Crawling', 'crawl-data')}
+          onClick={() => handleAction("Crawling", "crawl-data")}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === 'Crawling'}
+          disabled={loading === "Crawling"}
         >
-          {loading === 'Crawling' ? (
-            <Spinner />
-          ) : (
-            'Crawl Data'
-          )}
+          {loading === "Crawling" ? <Spinner /> : "Crawl Data"}
         </button>
 
         <button
-          onClick={() => handleAction('Converting', 'convert-to-txt')}
+          onClick={() => handleAction("Converting", "convert-to-txt")}
           className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === 'Converting'}
+          disabled={loading === "Converting"}
         >
-          {loading === 'Converting' ? (
-            <Spinner />
-          ) : (
-            'Convert Data'
-          )}
+          {loading === "Converting" ? <Spinner /> : "Convert Data"}
         </button>
 
         <button
-          onClick={() => handleAction('Training', 'train-model')}
+          onClick={() => handleAction("Training", "train-model")}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === 'Training'}
+          disabled={loading === "Training"}
         >
-          {loading === 'Training' ? (
-            <Spinner />
-          ) : (
-            'Train Data'
-          )}
+          {loading === "Training" ? <Spinner /> : "Train Data"}
         </button>
       </div>
 
