@@ -13,7 +13,7 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 
-def crawNewsData(scroll_times=1):
+def crawNewsData(scroll_times):
     user_agents = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -21,12 +21,16 @@ def crawNewsData(scroll_times=1):
     ]
 
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("start-maximized")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-sandbox")
     options.add_argument(f"user-agent={random.choice(user_agents)}")
+    
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -34,15 +38,14 @@ def crawNewsData(scroll_times=1):
     url = "https://lite.baomoi.com/"
     driver.get(url)
 
-    def scroll_down(driver, times):
-        body = driver.find_element(By.TAG_NAME, "body")
-        for _ in range(times):
-            body.send_keys(Keys.END)
-            time.sleep(2)
+    def fast_scroll(driver, times):
+        for i in range(times):
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(0.8)
 
-    scroll_down(driver, times=scroll_times)
-    time.sleep(5)
-    
+    fast_scroll(driver, times=scroll_times)
+    time.sleep(2)
+
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
@@ -57,6 +60,7 @@ def crawNewsData(scroll_times=1):
         data.append({"title": title, "image": image, "link": link})
 
     return data
+
 
 def save_to_excel(data):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,7 +81,7 @@ def save_to_excel(data):
 
 if __name__ == "__main__":
     try:
-        scroll_times = int(sys.argv[1]) if len(sys.argv) > 1 else 15
+        scroll_times = 100
         news_data = crawNewsData(scroll_times)
 
         save_to_excel(news_data)
