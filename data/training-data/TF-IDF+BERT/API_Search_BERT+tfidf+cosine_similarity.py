@@ -41,7 +41,7 @@ df['clean_title'] = df['title'].apply(preprocess_text)
 df['bert_embedding'] = df['clean_title'].apply(get_bert_embedding)
 
 # Tiêu đề truy vấn (có thể bị sai chính tả)
-target = "cơ sở"  # Giả sử nhập sai chính tả
+target = "du lịch sinh thái"  # Giả sử nhập sai chính tả
 target = preprocess_text(target)  # Chuẩn hóa trước
 
 # Nếu từ không có trong danh sách, tìm từ gần đúng nhất
