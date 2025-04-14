@@ -1,5 +1,3 @@
-# save_bert_vectors.py
-
 import pandas as pd
 import torch
 import numpy as np

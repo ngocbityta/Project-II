@@ -1,5 +1,3 @@
-# search_from_saved.py
-
 import pickle
 import pandas as pd
 import re
