@@ -31,14 +31,13 @@ if __name__ == "__main__":
     sentence = sys.argv[1]
     
     try:
-        vector_file_path = os.path.join(CURRENT_DIR, '../../trained-data/vector.json')
+        vector_file_path = os.path.join(CURRENT_DIR, '../../trained-data/word2vec/vector.json')
         with open(vector_file_path, 'r') as f:
             data = json.load(f)
         
         vectors = data['vectors']
 
         vec1 = average_sentence_vector(sentence, vectors)
-        print(vec1.tolist())
 
         news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
         try:
