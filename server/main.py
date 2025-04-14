@@ -70,10 +70,10 @@ def convert_to_txt():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
 
-@app.route('/train-model', methods=['POST'])
-def train_model():
+@app.route('/train-word2vec-model', methods=['POST'])
+def train_word2vec_model():
     try:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/train.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/train_word2vec.py'))
 
         result, error = run_script(script_path)
 
@@ -81,7 +81,7 @@ def train_model():
             return jsonify({"error": "Training failed", "details": error}), 500
 
         return jsonify({
-            "message": "Model training completed successfully",
+            "message": "Model Word2Vec training completed successfully",
             "output": result
         }), 200
     except Exception as e:
@@ -96,7 +96,7 @@ def get_word2vec_result():
         if not sentence:
             return jsonify({"error": "Sentence is required"}), 400
 
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/getResult.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/get_result_word2vec.py'))
 
         result, error = run_script(script_path, [sentence])
 
@@ -105,6 +105,46 @@ def get_word2vec_result():
 
         return jsonify({
             "message": "Word2Vec result obtained successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+    
+@app.route('/train-tfidf-model', methods=['POST'])
+def train_tfidf_model():
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/train_tfidf.py'))
+
+        result, error = run_script(script_path)
+
+        if error:
+            return jsonify({"error": "Training failed", "details": error}), 500
+
+        return jsonify({
+            "message": "Model TF-IDF training completed successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+
+@app.route('/get-tfidf-result', methods=['POST'])
+def get_tfidf_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py'))
+
+        result, error = run_script(script_path, [sentence])
+
+        if error:
+            return jsonify({"error": "Failed to get TF-IDF result", "details": error}), 500
+
+        return jsonify({
+            "message": "TF-IDF result obtained successfully",
             "output": result
         }), 200
     except Exception as e:

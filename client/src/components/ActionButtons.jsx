@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const ActionButtons = () => {
+const Word2VecButtons = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState("");
 
@@ -29,41 +29,57 @@ const ActionButtons = () => {
     }
   };
 
+  const actions = [
+    {
+      label: "Crawl Data",
+      action: "Crawling",
+      endpoint: "crawl-data",
+      bg: "bg-green-600",
+      hover: "hover:bg-green-700",
+    },
+    {
+      label: "Convert Data",
+      action: "Converting",
+      endpoint: "convert-to-txt",
+      bg: "bg-yellow-500",
+      hover: "hover:bg-yellow-600",
+    },
+    {
+      label: "Train Word2Vec",
+      action: "Training Word2Vec Model",
+      endpoint: "train-word2vec-model",
+      bg: "bg-blue-600",
+      hover: "hover:bg-blue-700",
+    },
+    {
+      label: "Train TF-IDF",
+      action: "Training TF-IDF Model",
+      endpoint: "train-tfidf-model",
+      bg: "bg-orange-600",
+      hover: "hover:bg-orange-700",
+    },
+  ];
+
   return (
-    <div className="max-w-xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10 text-center">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-        Data Actions
-      </h2>
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
-        <button
-          onClick={() => handleAction("Crawling", "crawl-data")}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === "Crawling"}
-        >
-          {loading === "Crawling" ? <Spinner /> : "Crawl Data"}
-        </button>
-
-        <button
-          onClick={() => handleAction("Converting", "convert-to-txt")}
-          className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === "Converting"}
-        >
-          {loading === "Converting" ? <Spinner /> : "Convert Data"}
-        </button>
-
-        <button
-          onClick={() => handleAction("Training", "train-model")}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 w-40 flex items-center justify-center"
-          disabled={loading === "Training"}
-        >
-          {loading === "Training" ? <Spinner /> : "Train Data"}
-        </button>
+    <div className="max-w-3xl mx-auto mt-12 px-6 py-8 bg-white rounded-3xl shadow-lg text-center">
+      <h2 className="text-3xl font-bold text-gray-800 mb-8">Data Processing Actions</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-5">
+        {actions.map(({ label, action, endpoint, bg, hover }) => (
+          <button
+            key={action}
+            onClick={() => handleAction(action, endpoint)}
+            className={`text-white px-6 py-3 rounded-xl transition duration-200 flex items-center justify-center disabled:opacity-50 ${bg} ${hover}`}
+            disabled={loading === action}
+          >
+            {loading === action ? <Spinner /> : label}
+          </button>
+        ))}
       </div>
 
       {message && (
-        <p className="mt-4 text-sm text-gray-700 font-medium bg-gray-100 p-2 rounded-lg">
+        <div className="mt-6 px-4 py-3 bg-gray-100 rounded-xl text-gray-700 text-sm font-medium border border-gray-200">
           {message}
-        </p>
+        </div>
       )}
     </div>
   );
@@ -92,4 +108,4 @@ const Spinner = () => (
   </svg>
 );
 
-export default ActionButtons;
+export default Word2VecButtons;

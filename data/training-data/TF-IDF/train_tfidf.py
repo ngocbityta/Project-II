@@ -1,43 +1,75 @@
-import pandas as pd
-import string
+import os
+import json
 import re
+import string
 import pickle
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse import save_npz
-import nltk
 
-nltk.download('punkt')
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Tiền xử lý
-with open('../../raw-data/stopwords.txt', 'r', encoding='utf-8') as f:
-    stopwords_list = [line.strip().lower() for line in f if line.strip()]
-    stopwords_list.sort(key=lambda x: len(x.split()), reverse=True)
+INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.xlsx")
+STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+VECTORIZER_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_vectorizer.pkl")
+MATRIX_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_matrix.npz")
+PROCESSED_DF_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/processed_news.pkl")
 
+REMOVE_PUNCTUATION = True
+REMOVE_STOP_WORDS = True
+
+# === Đọc stop words nếu có yêu cầu ===
+stop_words = []
+if REMOVE_STOP_WORDS:
+    try:
+        with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
+            stop_words = [line.strip().lower() for line in f if line.strip()]
+            stop_words.sort(key=lambda x: len(x.split()), reverse=True)
+    except FileNotFoundError:
+        print(json.dumps({
+            "error": f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.",
+            "status": "fail"
+        }, ensure_ascii=False, indent=4))
+        exit(1)
+
+# === Hàm tiền xử lý ===
 def preprocess_text(text):
     text = str(text).lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
+    if REMOVE_PUNCTUATION:
+        text = text.translate(str.maketrans('', '', string.punctuation))
     text = re.sub(r'\s+', ' ', text)
-    for stopword in stopwords_list:
-        pattern = r'\b' + re.escape(stopword) + r'\b'
-        text = re.sub(pattern, ' ', text)
+    if REMOVE_STOP_WORDS:
+        for stopword in stop_words:
+            pattern = r'\b' + re.escape(stopword) + r'\b'
+            text = re.sub(pattern, ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-# Đọc dữ liệu
-df = pd.read_excel('../../raw-data/news.xlsx')
-df['processed_title'] = df['title'].apply(preprocess_text)
+# === Xử lý dữ liệu ===
+try:
+    df = pd.read_excel(INPUT_PATH)
+    df['processed_title'] = df['title'].apply(preprocess_text)
 
-# Vector hóa
-vectorizer = TfidfVectorizer(min_df=2, max_df=0.95, sublinear_tf=True)
-tfidf_matrix = vectorizer.fit_transform(df['processed_title'])
+    # === Vector hóa TF-IDF ===
+    vectorizer = TfidfVectorizer(min_df=2, max_df=0.95, sublinear_tf=True)
+    tfidf_matrix = vectorizer.fit_transform(df['processed_title'])
 
-# Lưu vectorizer và tfidf matrix
-with open('../../trained-data/tfidf/tfidf_vectorizer.pkl', 'wb') as f:
-    pickle.dump(vectorizer, f)
+    # === Lưu vectorizer, matrix và dữ liệu đã xử lý ===
+    with open(VECTORIZER_OUTPUT, 'wb') as f:
+        pickle.dump(vectorizer, f)
+    save_npz(MATRIX_OUTPUT, tfidf_matrix)
+    df.to_pickle(PROCESSED_DF_OUTPUT)
 
-save_npz('../../trained-data/tfidf/tfidf_matrix.npz', tfidf_matrix)
+    result = {
+        "message": "Training TF-IDF complete. Vectorizer and matrix saved.",
+        "status": "success"
+    }
+except Exception as e:
+    result = {
+        "error": "Failed to train TF-IDF or save files.",
+        "details": str(e),
+        "status": "fail"
+    }
 
-# Lưu dữ liệu đã xử lý nếu cần
-df.to_pickle('../../trained-data/tfidf/processed_news.pkl')
-
-print("Đã lưu vectorizer, tfidf_matrix, và dataframe đã xử lý.")
+# === In kết quả dưới dạng JSON ===
+print(json.dumps(result, ensure_ascii=False, indent=4))

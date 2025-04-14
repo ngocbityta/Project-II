@@ -41,7 +41,7 @@ def crawNewsData(scroll_times):
     def fast_scroll(driver, times):
         for i in range(times):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(0.8)
+            time.sleep(2)
 
     fast_scroll(driver, times=scroll_times)
     time.sleep(2)
@@ -81,7 +81,7 @@ def save_to_excel(data):
 
 if __name__ == "__main__":
     try:
-        scroll_times = 100
+        scroll_times = 1000
         news_data = crawNewsData(scroll_times)
 
         save_to_excel(news_data)

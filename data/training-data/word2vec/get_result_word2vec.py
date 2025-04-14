@@ -38,6 +38,7 @@ if __name__ == "__main__":
         vectors = data['vectors']
 
         vec1 = average_sentence_vector(sentence, vectors)
+        print(vec1.tolist())
 
         news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
         try:

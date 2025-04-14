@@ -5,7 +5,8 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const SearchBar = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
+  const [word2vecResults, setWord2vecResults] = useState([]);
+  const [tfidfResults, setTfidfResults] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,16 +18,27 @@ const SearchBar = () => {
 
     setLoading(true);
     setMessage('');
-    setResults([]);
+    setWord2vecResults([]);
+    setTfidfResults([]);
 
     try {
-      const response = await axios.post(`${API_URL}/get-word2vec-result`, {
-        sentence: query,
-      });
-      // Assuming the response structure you mentioned
-      if (response.data.output && response.data.output.similarities) {
-        setResults(response.data.output.similarities);
-      } else {
+      const [word2vecRes, tfidfRes] = await Promise.all([
+        axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
+      ]);
+
+      if (word2vecRes.data.output?.similarities) {
+        setWord2vecResults(word2vecRes.data.output.similarities);
+      }
+
+      if (tfidfRes.data.output?.similarities) {
+        setTfidfResults(tfidfRes.data.output.similarities);
+      }
+
+      if (
+        !word2vecRes.data.output?.similarities?.length &&
+        !tfidfRes.data.output?.similarities?.length
+      ) {
         setMessage('No results found');
       }
     } catch (error) {
@@ -36,9 +48,32 @@ const SearchBar = () => {
     }
   };
 
+  const renderResults = (results, title) => (
+    <div className="w-full md:w-1/2">
+      <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">{title}</h3>
+      {results.length > 0 ? (
+        <ul className="space-y-2">
+          {results.map((result, index) => (
+            <li
+              key={index}
+              className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
+            >
+              <p className="font-medium text-gray-700">{result.sentence}</p>
+              <p className="text-sm text-gray-500">
+                Cosine similarity: {result.cosine_similarity.toFixed(3)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        !loading && <p className="text-gray-500 text-center">No results</p>
+      )}
+    </div>
+  );
+
   return (
-    <div className="max-w-xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">Search Word2Vec</h2>
+    <div className="max-w-5xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
+      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">Search Word2Vec & TF-IDF</h2>
       <div className="flex flex-col sm:flex-row gap-2 items-center">
         <input
           type="text"
@@ -83,24 +118,9 @@ const SearchBar = () => {
         <p className="text-red-500 mt-3 text-center font-medium">{message}</p>
       )}
 
-      <div className="mt-6">
-        {results.length > 0 ? (
-          <ul className="space-y-2">
-            {results.map((result, index) => (
-              <li
-                key={index}
-                className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
-              >
-                <div>
-                  <p className="font-medium text-gray-700">{result.sentence}</p>
-                  <p className="text-sm text-gray-500">Cosine similarity: {result.cosine_similarity.toFixed(3)}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          !message && !loading && <p className="text-gray-500 text-center">No results found</p>
-        )}
+      <div className="mt-6 flex flex-col md:flex-row gap-6">
+        {renderResults(word2vecResults, 'Word2Vec Results')}
+        {renderResults(tfidfResults, 'TF-IDF Results')}
       </div>
     </div>
   );
