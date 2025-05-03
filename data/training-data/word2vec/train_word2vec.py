@@ -11,7 +11,7 @@ INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
 OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/word2vec/vector.json")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
 
-REMOVE_STOP_WORDS = False
+REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
 
 # === Xử lý danh sách file ===
@@ -38,6 +38,7 @@ for file in listOfFiles:
     # === Làm sạch câu ===
     for i in range(len(sentences)):
         sentence = sentences[i].strip()
+        sentence = sentence.lower() 
         if REMOVE_PUNCTUATION:
             sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
         if REMOVE_STOP_WORDS:
