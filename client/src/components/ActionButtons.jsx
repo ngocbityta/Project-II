@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Word2VecButtons = () => {
+const ActionButtons = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState("");
 
@@ -58,6 +58,13 @@ const Word2VecButtons = () => {
       bg: "bg-orange-600",
       hover: "hover:bg-orange-700",
     },
+    {
+      label: "Train Doc2Vec (DBOW)",
+      action: "Training Doc2Vec DBOW",
+      endpoint: "train-doc2vec-dbow",
+      bg: "bg-purple-600",
+      hover: "hover:bg-purple-700",
+    },
   ];
 
   return (
@@ -108,4 +115,4 @@ const Spinner = () => (
   </svg>
 );
 
-export default Word2VecButtons;
+export default ActionButtons;
