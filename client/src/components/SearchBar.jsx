@@ -7,6 +7,7 @@ const SearchBar = () => {
   const [query, setQuery] = useState('');
   const [word2vecResults, setWord2vecResults] = useState([]);
   const [tfidfResults, setTfidfResults] = useState([]);
+  const [doc2vecResults, setDoc2vecResults] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,29 +16,36 @@ const SearchBar = () => {
       setMessage('Please enter a search term');
       return;
     }
-
+  
     setLoading(true);
     setMessage('');
     setWord2vecResults([]);
     setTfidfResults([]);
-
+    setDoc2vecResults([]);
+  
     try {
-      const [word2vecRes, tfidfRes] = await Promise.all([
+      const [word2vecRes, tfidfRes, doc2vecRes] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
       ]);
-
+  
       if (word2vecRes.data.output?.similarities) {
         setWord2vecResults(word2vecRes.data.output.similarities);
       }
-
+  
       if (tfidfRes.data.output?.similarities) {
         setTfidfResults(tfidfRes.data.output.similarities);
       }
-
+  
+      if (doc2vecRes.data.output?.similarities) {
+        setDoc2vecResults(doc2vecRes.data.output.similarities);
+      }
+  
       if (
         !word2vecRes.data.output?.similarities?.length &&
-        !tfidfRes.data.output?.similarities?.length
+        !tfidfRes.data.output?.similarities?.length &&
+        !doc2vecRes.data.output?.similarities?.length
       ) {
         setMessage('No results found');
       }
@@ -47,6 +55,7 @@ const SearchBar = () => {
       setLoading(false);
     }
   };
+  
 
   const renderResults = (results, title) => (
     <div className="w-full md:w-1/2">
@@ -121,6 +130,7 @@ const SearchBar = () => {
       <div className="mt-6 flex flex-col md:flex-row gap-6">
         {renderResults(word2vecResults, 'Word2Vec Results')}
         {renderResults(tfidfResults, 'TF-IDF Results')}
+        {renderResults(doc2vecResults, 'Doc2Vec Results')}
       </div>
     </div>
   );

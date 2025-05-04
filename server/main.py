@@ -150,5 +150,45 @@ def get_tfidf_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
+@app.route('/train-doc2vec-model', methods=['POST'])
+def train_doc2vec_model():
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/train_doc2vec.py'))
+
+        result, error = run_script(script_path)
+
+        if error:
+            return jsonify({"error": "Training failed", "details": error}), 500
+
+        return jsonify({
+            "message": "Model Doc2Vec training completed successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+
+@app.route('/get-doc2vec-result', methods=['POST'])
+def get_doc2vec_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/get_result_doc2vec.py'))
+
+        result, error = run_script(script_path, [sentence])
+
+        if error:
+            return jsonify({"error": "Failed to get Doc2Vec result", "details": error}), 500
+
+        return jsonify({
+            "message": "Doc2Vec result obtained successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)
