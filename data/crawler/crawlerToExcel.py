@@ -41,7 +41,7 @@ def crawNewsData(scroll_times):
     def fast_scroll(driver, times):
         for i in range(times):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(0.8)
+            time.sleep(2)
 
     fast_scroll(driver, times=scroll_times)
     time.sleep(2)
@@ -61,17 +61,21 @@ def crawNewsData(scroll_times):
 
     return data
 
-
 def save_to_excel(data):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     output_path = os.path.join(BASE_DIR, "../raw-data/news.xlsx")
 
-    df = pd.DataFrame(data)
-    df.to_excel(output_path, index=False, engine='openpyxl')
+    if os.path.exists(output_path):
+        existing_df = pd.read_excel(output_path, engine='openpyxl')
+        new_df = pd.DataFrame(data)
+        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+    else:
+        combined_df = pd.DataFrame(data)
+
+    combined_df.to_excel(output_path, index=False, engine='openpyxl')
 
     wb = openpyxl.load_workbook(output_path)
     ws = wb.active
-
     column_widths = {"A": 100, "B": 100, "C": 100}
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
