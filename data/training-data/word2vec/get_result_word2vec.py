@@ -16,7 +16,7 @@ def cosine_similarity(vecA, vecB):
 # Hàm tính vector trung bình từ dict vectors và danh sách từ
 def average_sentence_vector(sentence, vector_dict):
     sentence = sentence.lower()
-    words = word_tokenize(sentence)
+    words = word_tokenize(sentence, format='text').split()
     word_vectors = [np.array(vector_dict[word]) for word in words if word in vector_dict]
     if not word_vectors:
         raise ValueError(f"Không có từ nào trong câu '{sentence}' tồn tại trong vector dictionary.")
@@ -61,8 +61,8 @@ if __name__ == "__main__":
 
         # Sắp xếp các câu theo cosine similarity giảm dần
         similarities.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-    
-        print(json.dumps({"similarities": similarities}))
+        top_similarities = similarities[:10]
+        print(json.dumps({"similarities": top_similarities}))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

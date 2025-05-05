@@ -16,11 +16,11 @@ def cosine_similarity(vecA, vecB):
     return dot_product / (normA * normB)
 
 if __name__ == "__main__":
-    # if len(sys.argv) < 2:
-    #     print(json.dumps({"error": "No sentence provided."}))
-    #     sys.exit(1)
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "No sentence provided."}))
+        sys.exit(1)
 
-    sentence = "Phát triển bền vững"
+    sentence = sys.argv[1]
 
     try:
         # === Load mô hình Doc2Vec đã huấn luyện ===
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         vectors = data['vectors']
 
         # === Xử lý câu đầu vào ===
-        tokens = word_tokenize(sentence.lower())
+        tokens = word_tokenize(sentence.lower(), format='text').split()
         input_vector = model.infer_vector(tokens)
 
         # === Tính cosine similarity với từng document đã lưu ===
@@ -49,7 +49,8 @@ if __name__ == "__main__":
         # === Sắp xếp theo độ tương đồng giảm dần ===
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
 
-        print(json.dumps({"similarities": similarities}, ensure_ascii=False, indent=2))
+        top_similarities = similarities[:10]
+        print(json.dumps({"similarities": top_similarities}))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

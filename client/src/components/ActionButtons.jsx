@@ -59,9 +59,9 @@ const ActionButtons = () => {
       hover: "hover:bg-orange-700",
     },
     {
-      label: "Train Doc2Vec (DBOW)",
-      action: "Training Doc2Vec DBOW",
-      endpoint: "train-doc2vec-dbow",
+      label: "Train Doc2Vec",
+      action: "Training Doc2Vec",
+      endpoint: "train-doc2vec-model",
       bg: "bg-purple-600",
       hover: "hover:bg-purple-700",
     },

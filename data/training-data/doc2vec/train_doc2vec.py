@@ -41,7 +41,7 @@ for file in listOfFiles:
                 continue
             if REMOVE_PUNCTUATION:
                 sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
-            words = underthesea.word_tokenize(sentence)
+            words = underthesea.word_tokenize(sentence, format='text').split()
             if REMOVE_STOP_WORDS:
                 words = [word for word in words if word not in stop_words]
 

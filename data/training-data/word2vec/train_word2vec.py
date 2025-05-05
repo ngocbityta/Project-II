@@ -47,8 +47,8 @@ for file in listOfFiles:
 
     # === Tách từ dùng underthesea ===
     for sentence in sentences:
-        words = underthesea.word_tokenize(sentence)
-        final_sentences.append(words)
+        words = underthesea.word_tokenize(sentence, format='text')
+        final_sentences.append(words.split())
 
 # === Huấn luyện Word2Vec ===
 model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=1, workers=3)
