@@ -31,20 +31,6 @@ const ActionButtons = () => {
 
   const actions = [
     {
-      label: "Crawl Data",
-      action: "Crawling",
-      endpoint: "crawl-data",
-      bg: "bg-green-600",
-      hover: "hover:bg-green-700",
-    },
-    {
-      label: "Convert Data",
-      action: "Converting",
-      endpoint: "convert-to-txt",
-      bg: "bg-yellow-500",
-      hover: "hover:bg-yellow-600",
-    },
-    {
       label: "Train Word2Vec",
       action: "Training Word2Vec Model",
       endpoint: "train-word2vec-model",
@@ -59,9 +45,9 @@ const ActionButtons = () => {
       hover: "hover:bg-orange-700",
     },
     {
-      label: "Train Doc2Vec (DBOW)",
-      action: "Training Doc2Vec DBOW",
-      endpoint: "train-doc2vec-dbow",
+      label: "Train Doc2Vec",
+      action: "Training Doc2Vec",
+      endpoint: "train-doc2vec-model",
       bg: "bg-purple-600",
       hover: "hover:bg-purple-700",
     },

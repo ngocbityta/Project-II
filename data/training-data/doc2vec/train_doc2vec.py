@@ -52,14 +52,13 @@ for file in listOfFiles:
 # === Huấn luyện mô hình Doc2Vec ===
 model = Doc2Vec(
     documents=documents,
-    vector_size=300,
-    window=15,
+    vector_size=50,
+    window=5,
     min_count=1,
-    sample=1e-5,
     workers=3,
-    hs=0,
+    hs=1,
     dm=0,  # DBOW
-    negative=5,
+    negative=0,
     dbow_words=1,
     epochs=100
 )

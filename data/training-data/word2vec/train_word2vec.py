@@ -51,7 +51,7 @@ for file in listOfFiles:
         final_sentences.append(words)
 
 # === Huấn luyện Word2Vec ===
-model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=1, workers=3)
+model = Word2Vec(final_sentences, vector_size=70, window=5, min_count=1, workers=3)
 
 # === Chuyển sang JSON và lưu ===
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}

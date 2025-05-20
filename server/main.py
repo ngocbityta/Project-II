@@ -31,32 +31,11 @@ def run_script(script_path, args=[]):
     except Exception as e:
         return None, str(e)
 
-@app.route('/crawl-data', methods=['POST'])
-def run_crawler():
-    try:
-        data = request.get_json() if request.is_json else {}
-        number_of_scroll = data.get('numberOfScroll', 1)
 
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/crawler/crawlerToExcel.py'))
-
-        result, error = run_script(script_path, [str(number_of_scroll)])
-
-        if error:
-            return jsonify({"error": "Crawler failed", "numberOfScroll": number_of_scroll, "details": error}), 500
-
-        return jsonify({
-            "message": "Crawler executed successfully",
-            "numberOfScroll": number_of_scroll,
-            "output": result
-        }), 200
-    except Exception as e:
-        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
-
-
-@app.route('/convert-to-txt', methods=['POST'])
+@app.route('/get-title', methods=['POST'])
 def convert_to_txt():
     try:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/crawler/convertToTxt.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/crawler/getTitle.py'))
 
         result, error = run_script(script_path)
 

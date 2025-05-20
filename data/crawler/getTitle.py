@@ -2,23 +2,25 @@ import pandas as pd
 import json
 import os
 
-def convert_to_txt():
+def get_title():
     try:
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
         # Thiết lập đường dẫn tuyệt đối tới file input và output
-        excel_path = os.path.join(BASE_DIR, "../raw-data/news.xlsx")
-        txt_path = os.path.join(BASE_DIR, "../raw-data/news.txt")
+        input_path = os.path.join(BASE_DIR, "../raw-data/corpus-title.txt")
+        output_path = os.path.join(BASE_DIR, "../raw-data/news.txt")
 
-        df = pd.read_excel(excel_path)
-        titles = df['title']
+        with open(input_path, 'r', encoding='utf-8') as infile:
+            lines = infile.readlines()
 
-        with open(txt_path, 'w', encoding='utf-8') as file:
+        titles = lines[:100000]
+
+        with open(output_path, 'w', encoding='utf-8') as file:
             for title in titles:
-                file.write(title + '\n')
+                file.write(str(title))
 
         return {
-            "message": "Đã ghi các tiêu đề vào news.txt",
+            "message": "Đã ghi 100.000 tiêu đề vào news.txt",
             "status": "success"
         }
 
@@ -30,5 +32,5 @@ def convert_to_txt():
         }
 
 if __name__ == '__main__':
-    result = convert_to_txt()
+    result = get_title()
     print(json.dumps(result, ensure_ascii=False, indent=4))
