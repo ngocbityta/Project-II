@@ -8,6 +8,7 @@ const SearchBar = () => {
   const [word2vecResults, setWord2vecResults] = useState([]);
   const [tfidfResults, setTfidfResults] = useState([]);
   const [doc2vecResults, setDoc2vecResults] = useState([]);
+  const [bertResults, setBertResults] = useState([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -22,12 +23,14 @@ const SearchBar = () => {
     setWord2vecResults([]);
     setTfidfResults([]);
     setDoc2vecResults([]);
+    setBertResults([]);
   
     try {
-      const [word2vecRes, tfidfRes, doc2vecRes] = await Promise.all([
+      const [word2vecRes, tfidfRes, doc2vecRes, bertRes] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
         axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-bert-result`, { sentence: query }),
       ]);
   
       if (word2vecRes.data.output?.similarities) {
@@ -41,11 +44,16 @@ const SearchBar = () => {
       if (doc2vecRes.data.output?.similarities) {
         setDoc2vecResults(doc2vecRes.data.output.similarities);
       }
+
+      if (bertRes.data.output?.similarities) {
+        setBertResults(bertRes.data.output.similarities);
+      }
   
       if (
         !word2vecRes.data.output?.similarities?.length &&
         !tfidfRes.data.output?.similarities?.length &&
-        !doc2vecRes.data.output?.similarities?.length
+        !doc2vecRes.data.output?.similarities?.length &&
+        !bertRes.data.output?.similarities?.length
       ) {
         setMessage('No results found');
       }
@@ -131,6 +139,7 @@ const SearchBar = () => {
         {renderResults(word2vecResults, 'Word2Vec Results')}
         {renderResults(tfidfResults, 'TF-IDF Results')}
         {renderResults(doc2vecResults, 'Doc2Vec Results')}
+        {renderResults(bertResults, 'BERT Results')}
       </div>
     </div>
   );

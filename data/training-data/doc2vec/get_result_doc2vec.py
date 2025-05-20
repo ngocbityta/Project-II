@@ -1,9 +1,9 @@
 import json
 import os
 import numpy as np
-import sys
 from gensim.models import Doc2Vec
 from underthesea import word_tokenize
+import sys
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,41 +16,43 @@ def cosine_similarity(vecA, vecB):
     return dot_product / (normA * normB)
 
 if __name__ == "__main__":
-    # if len(sys.argv) < 2:
-    #     print(json.dumps({"error": "No sentence provided."}))
-    #     sys.exit(1)
-
-    sentence = "Phát triển bền vững"
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "No sentence provided."}))
+        sys.exit(1)
+        
+    sentence = sys.argv[1]
 
     try:
         # === Load mô hình Doc2Vec đã huấn luyện ===
         model_path = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/doc2vec.model")
         model = Doc2Vec.load(model_path)
 
-        # === Load vector document đã lưu để so sánh nhãn ===
-        vector_file_path = os.path.join(CURRENT_DIR, '../../trained-data/doc2vec/vector.json')
-        with open(vector_file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        vectors = data['vectors']
+        # === Load raw sentences theo tag (được lưu khi train) ===
+        raw_sentences_path = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/raw_sentences.json")
+        with open(raw_sentences_path, 'r', encoding='utf-8') as f:
+            raw_sentences = json.load(f)
 
-        # === Xử lý câu đầu vào ===
+        # === Tiền xử lý câu đầu vào ===
         tokens = word_tokenize(sentence.lower())
-        input_vector = model.infer_vector(tokens)
+        inferred_vector = model.infer_vector(tokens)
 
-        # === Tính cosine similarity với từng document đã lưu ===
+        # === Tính cosine similarity với tất cả vector tài liệu ===
         similarities = []
-        for doc_id, doc_vector in vectors.items():
-            similarity = cosine_similarity(input_vector, np.array(doc_vector))
+        for tag in model.dv.index_to_key:
+            doc_vector = model.dv[tag]
+            similarity = cosine_similarity(inferred_vector, doc_vector)
+            original_text = raw_sentences.get(tag, "")
             similarities.append({
-                "sentence": doc_id,
-                "cosine_similarity": similarity
+                "sentence": original_text,
+                "cosine_similarity": float(similarity)
             })
 
-        # === Sắp xếp theo độ tương đồng giảm dần ===
+        # === Sắp xếp và lấy top 10 ===
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
+        top_similar = similarities[:10]
 
-        print(json.dumps({"similarities": similarities}, ensure_ascii=False, indent=2))
+        print(json.dumps({"similarities": top_similar}, ensure_ascii=False, indent=2))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))
-        sys.exit(1)
+        exit(1)

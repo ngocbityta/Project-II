@@ -51,6 +51,13 @@ const ActionButtons = () => {
       bg: "bg-purple-600",
       hover: "hover:bg-purple-700",
     },
+    {
+      label: "Train BERT",
+      action: "Training BERT Model",
+      endpoint: "train-bert-model",
+      bg: "bg-green-600",
+      hover: "hover:bg-green-700",
+    },
   ];
 
   return (

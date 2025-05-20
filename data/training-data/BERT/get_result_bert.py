@@ -67,8 +67,9 @@ if __name__ == "__main__":
                 continue
 
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
+        top_similar = similarities[:10]
 
-        print(json.dumps({"similarities": similarities}, ensure_ascii=False))
+        print(json.dumps({"similarities": top_similar}, ensure_ascii=False))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

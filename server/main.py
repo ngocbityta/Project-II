@@ -169,5 +169,45 @@ def get_doc2vec_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
+@app.route('/train-bert-model', methods=['POST'])
+def train_bert_model():
+    try:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bert/train_bert.py'))
+
+        result, error = run_script(script_path)
+
+        if error:
+            return jsonify({"error": "Training failed", "details": error}), 500
+
+        return jsonify({
+            "message": "Model BERT training completed successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+    
+@app.route('/get-bert-result', methods=['POST'])
+def get_bert_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py'))
+
+        result, error = run_script(script_path, [sentence])
+
+        if error:
+            return jsonify({"error": "Failed to get BERT result", "details": error}), 500
+
+        return jsonify({
+            "message": "BERT result obtained successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+    
 if __name__ == '__main__':
     app.run(debug=True)

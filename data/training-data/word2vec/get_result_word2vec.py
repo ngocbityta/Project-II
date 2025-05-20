@@ -61,8 +61,9 @@ if __name__ == "__main__":
 
         # Sắp xếp các câu theo cosine similarity giảm dần
         similarities.sort(reverse=True, key=lambda x: x["cosine_similarity"])
+        top_similar = similarities[:10]
     
-        print(json.dumps({"similarities": similarities}))
+        print(json.dumps({"similarities": top_similar}, ensure_ascii=False, indent=2))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

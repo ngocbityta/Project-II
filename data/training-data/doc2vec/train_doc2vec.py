@@ -1,41 +1,53 @@
-from gensim.models import Doc2Vec
-from gensim.models.doc2vec import TaggedDocument
-import json
-import glob
 import os
 import re
+import json
+import glob
 import underthesea
+from gensim.models import Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
 
+# === Cấu hình ===
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
-VECTORS_PATH = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/vector.json")
 MODEL_PATH = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/doc2vec.model")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+RAW_SENTENCES_FILE = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/raw_sentences.json")
 
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
 
-# === Xử lý danh sách file ===
-listOfFiles = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PATH + '/*.txt')
+VECTOR_SIZE = 100
+WINDOW_SIZE = 5
+MIN_COUNT = 2
+EPOCHS = 20
+WORKERS = 4
 
-# === Đọc stop words nếu có yêu cầu ===
+# === Tạo thư mục nếu chưa có ===
+os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+
+# === Load stop words nếu có yêu cầu ===
 stop_words = set()
 if REMOVE_STOP_WORDS:
-    try:
+    if os.path.exists(STOP_WORDS_FILE):
         with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
             stop_words = set(f.read().splitlines())
-    except FileNotFoundError:
-        print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
+    else:
+        print(f"[❌] Không tìm thấy file stop words: {STOP_WORDS_FILE}")
         exit(1)
 
-# === Tiền xử lý và tách từ ===
+# === Load dữ liệu văn bản ===
 documents = []
-raw_sentences = {}  # map tag -> raw sentence
-for file in listOfFiles:
-    with open(file, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        for line in lines:
+raw_sentences = {}
+list_of_files = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PATH + '/*.txt')
+
+if not list_of_files:
+    print(f"[❌] Không tìm thấy file nào trong {INPUT_PATH}")
+    exit(1)
+
+tag_index = 0
+for file_path in list_of_files:
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line in f:
             sentence = line.strip().lower()
             if not sentence:
                 continue
@@ -43,51 +55,44 @@ for file in listOfFiles:
                 sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
             words = underthesea.word_tokenize(sentence)
             if REMOVE_STOP_WORDS:
-                words = [word for word in words if word not in stop_words]
-
-            tag = f'doc_{len(documents)}'
+                words = [w for w in words if w not in stop_words]
+            tag = f"doc_{tag_index}"
             documents.append(TaggedDocument(words=words, tags=[tag]))
-            raw_sentences[tag] = line.strip()  # lưu raw chưa lower
+            raw_sentences[tag] = line.strip()  # Lưu câu gốc chưa xử lý
+            tag_index += 1
 
-# === Huấn luyện mô hình Doc2Vec ===
+if not documents:
+    print("[❌] Không có dữ liệu hợp lệ để train.")
+    exit(1)
+
 model = Doc2Vec(
     documents=documents,
-    vector_size=50,
-    window=5,
-    min_count=1,
-    workers=3,
-    hs=1,
+    vector_size=100,
+    window=3,
+    min_count=2,
+    workers=4,
+    epochs=20,
     dm=0,  # DBOW
+    hs=1,
     negative=0,
-    dbow_words=1,
-    epochs=100
+    dbow_words=1
 )
 
-# === Lưu vector của các document ===
-vectors = {
-    "vectors": {
-        raw_sentences[doc.tags[0]]: model.dv[doc.tags[0]].tolist()
-        for doc in documents
-    }
-}
-
+# === Lưu mô hình và dữ liệu ===
 try:
-    # Lưu vector
-    with open(VECTORS_PATH, "w", encoding="utf-8") as out_file:
-        json.dump(vectors, out_file, indent=2, ensure_ascii=False)
-
-    # Lưu mô hình
     model.save(MODEL_PATH)
+    with open(RAW_SENTENCES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(raw_sentences, f, ensure_ascii=False, indent=2)
 
     result = {
-        "message": "Training complete. Vectors and model saved.",
+        "message": "✅ Training complete. Model and raw_sentences saved.",
         "status": "success"
     }
 except Exception as e:
     result = {
-        "error": "Failed to save Doc2Vec output",
+        "error": "❌ Failed to save model or raw_sentences.",
         "details": str(e),
         "status": "fail"
     }
 
-print(json.dumps(result, ensure_ascii=False, indent=4))
+print(json.dumps(result, ensure_ascii=False, indent=2))
