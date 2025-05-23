@@ -40,12 +40,12 @@ if __name__ == "__main__":
 
         vec1 = average_sentence_vector(sentence, vectors)
 
-        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
+        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/test_news.txt')
         try:
             with open(news_file_path, 'r', encoding='utf-8') as file:
                 sentences = file.readlines()
         except FileNotFoundError:
-            print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}))
+            print(json.dumps({"error": "Không tìm thấy tệp tin test_news.txt"}))
             sys.exit(1)
 
         similarities = []

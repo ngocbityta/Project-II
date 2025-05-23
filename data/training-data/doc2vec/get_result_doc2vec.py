@@ -15,6 +15,11 @@ def cosine_similarity(vecA, vecB):
         return 0.0
     return dot_product / (normA * normB)
 
+def get_vector(sentence, model):
+    tokens = word_tokenize(sentence.lower().strip())
+    inferred_vector = model.infer_vector(tokens)
+    return inferred_vector
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No sentence provided."}))
@@ -26,24 +31,24 @@ if __name__ == "__main__":
         # === Load mô hình Doc2Vec đã huấn luyện ===
         model_path = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/doc2vec.model")
         model = Doc2Vec.load(model_path)
+        
+        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/test_news.txt')
+        try:
+            with open(news_file_path, 'r', encoding='utf-8') as file:
+                sentences = file.readlines()
+        except FileNotFoundError:
+            print(json.dumps({"error": "Không tìm thấy tệp tin test_news.txt"}))
+            sys.exit(1)
 
-        # === Load raw sentences theo tag (được lưu khi train) ===
-        raw_sentences_path = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/raw_sentences.json")
-        with open(raw_sentences_path, 'r', encoding='utf-8') as f:
-            raw_sentences = json.load(f)
-
-        # === Tiền xử lý câu đầu vào ===
-        tokens = word_tokenize(sentence.lower())
-        inferred_vector = model.infer_vector(tokens)
+        vec1 = get_vector(sentence, model)
 
         # === Tính cosine similarity với tất cả vector tài liệu ===
         similarities = []
-        for tag in model.dv.index_to_key:
-            doc_vector = model.dv[tag]
-            similarity = cosine_similarity(inferred_vector, doc_vector)
-            original_text = raw_sentences.get(tag, "")
+        for new_sentence in sentences:
+            vec2 = get_vector(new_sentence, model)
+            similarity = cosine_similarity(vec1, vec2)
             similarities.append({
-                "sentence": original_text,
+                "sentence": new_sentence,
                 "cosine_similarity": float(similarity)
             })
 
