@@ -66,7 +66,7 @@ if __name__ == "__main__":
     
     try:
         vector_file_path = os.path.join(CURRENT_DIR, '../../trained-data/word2vec/vector.json')
-        with open(vector_file_path, 'r') as f:
+        with open(vector_file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         vectors = data['vectors']

@@ -21,7 +21,7 @@ listOfFiles = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PA
 stop_words = set()
 if REMOVE_STOP_WORDS:
     try:
-        with open(STOP_WORDS_FILE, 'r') as f:
+        with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
             stop_words = set(f.read().splitlines())
     except FileNotFoundError:
         print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
