@@ -57,7 +57,7 @@ model = Word2Vec(final_sentences, vector_size=100, window=2, min_count=1, worker
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}
 
 try:
-    with open(OUTPUT_PATH, "w") as out_file:
+    with open(OUTPUT_PATH, "w", encoding='utf-8') as out_file:
         json.dump(vectors, out_file, indent=2, ensure_ascii=False)
 
     # Trả về kết quả thành công

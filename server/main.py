@@ -17,7 +17,8 @@ def run_script(script_path, args=[]):
         result = subprocess.run(
             [venv_python, script_path] + args,
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8'
         )
         print(result)
 

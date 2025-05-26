@@ -6,7 +6,9 @@ import re
 from gensim.models import Doc2Vec
 from underthesea import word_tokenize
 import sys
+import io
 
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def normalize_sentence(s):
