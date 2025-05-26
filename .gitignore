@@ -1,3 +1,13 @@
+# Ignore all .model files
+*.model
+
+# Ignore all vector.json files (regardless of folder)
+vector.json
+*/vector.json
+
+# Ignore pickle and numpy zipped files
+*.pkl
+*.npz
 
 # Logs
 logs

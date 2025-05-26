@@ -4,7 +4,6 @@ import numpy as np
 import sys
 import torch
 from transformers import BertTokenizer, BertForMaskedLM
-from underthesea import word_tokenize
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -17,33 +16,27 @@ def cosine_similarity(vecA, vecB):
     return dot_product / (normA * normB)
 
 def average_sentence_vector(sentence, model, tokenizer):
+    # Không dùng underthesea, chỉ dùng tokenizer của BERT
     sentence = sentence.lower()
-    words = word_tokenize(sentence)
-    inputs = tokenizer(" ".join(words), return_tensors="pt", padding=True, truncation=True, max_length=512)
-    
+    inputs = tokenizer(sentence, return_tensors="pt", padding=True, truncation=True, max_length=512)
     with torch.no_grad():
         outputs = model(**inputs)
-        # For BertForMaskedLM, hidden states are in outputs[0]
-        last_hidden_states = outputs[0]  
-        # Mean pooling over tokens, move tensor to cpu before numpy
+        last_hidden_states = outputs[0]
         sentence_embedding = last_hidden_states.mean(dim=1).squeeze().cpu().numpy()
-
     return sentence_embedding
 
 if __name__ == "__main__":
-    
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No sentence provided."}))
         sys.exit(1)
 
     sentence = sys.argv[1]
-    
+
     try:
         model_path = os.path.join(CURRENT_DIR, '../../trained-data/bert-model')
         model = BertForMaskedLM.from_pretrained(model_path)
         tokenizer = BertTokenizer.from_pretrained(model_path)
-
-        model.eval()  # Set model to evaluation mode
+        model.eval()
 
         vec1 = average_sentence_vector(sentence, model, tokenizer)
 
@@ -56,9 +49,10 @@ if __name__ == "__main__":
             sys.exit(1)
 
         similarities = []
-
         for news_sentence in sentences:
             news_sentence = news_sentence.strip()
+            if not news_sentence:
+                continue
             try:
                 vec2 = average_sentence_vector(news_sentence, model, tokenizer)
                 similarity = cosine_similarity(vec1, vec2)
@@ -68,7 +62,6 @@ if __name__ == "__main__":
 
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         top_similar = similarities[:10]
-
         print(json.dumps({"similarities": top_similar}, ensure_ascii=False))
 
     except Exception as e:

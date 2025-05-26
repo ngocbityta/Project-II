@@ -6,9 +6,9 @@ const API_URL = import.meta.env.VITE_API_URL;
 const SearchBar = () => {
   const [query, setQuery] = useState('');
   const [word2vecResults, setWord2vecResults] = useState([]);
-  const [tfidfResults, setTfidfResults] = useState([]);
   const [doc2vecResults, setDoc2vecResults] = useState([]);
-  const [bertResults, setBertResults] = useState([]);
+  const [word2vecAccuracy, setWord2vecAccuracy] = useState(null);
+  const [doc2vecAccuracy, setDoc2vecAccuracy] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,43 +17,33 @@ const SearchBar = () => {
       setMessage('Please enter a search term');
       return;
     }
-  
+
     setLoading(true);
     setMessage('');
     setWord2vecResults([]);
-    setTfidfResults([]);
     setDoc2vecResults([]);
-    setBertResults([]);
-  
+    setWord2vecAccuracy(null);
+    setDoc2vecAccuracy(null);
+
     try {
-      const [word2vecRes, tfidfRes, doc2vecRes, bertRes] = await Promise.all([
+      const [word2vecRes, doc2vecRes] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
-        axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
         axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
-        axios.post(`${API_URL}/get-bert-result`, { sentence: query }),
       ]);
-  
+
       if (word2vecRes.data.output?.similarities) {
         setWord2vecResults(word2vecRes.data.output.similarities);
-      }
-  
-      if (tfidfRes.data.output?.similarities) {
-        setTfidfResults(tfidfRes.data.output.similarities);
-      }
-  
-      if (doc2vecRes.data.output?.similarities) {
-        setDoc2vecResults(doc2vecRes.data.output.similarities);
+        setWord2vecAccuracy(word2vecRes.data.output.accuracy ?? null);
       }
 
-      if (bertRes.data.output?.similarities) {
-        setBertResults(bertRes.data.output.similarities);
+      if (doc2vecRes.data.output?.similarities) {
+        setDoc2vecResults(doc2vecRes.data.output.similarities);
+        setDoc2vecAccuracy(doc2vecRes.data.output.accuracy ?? null);
       }
-  
+
       if (
         !word2vecRes.data.output?.similarities?.length &&
-        !tfidfRes.data.output?.similarities?.length &&
-        !doc2vecRes.data.output?.similarities?.length &&
-        !bertRes.data.output?.similarities?.length
+        !doc2vecRes.data.output?.similarities?.length
       ) {
         setMessage('No results found');
       }
@@ -63,11 +53,15 @@ const SearchBar = () => {
       setLoading(false);
     }
   };
-  
 
-  const renderResults = (results, title) => (
+  const renderResults = (results, title, accuracy) => (
     <div className="w-full md:w-1/2">
       <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">{title}</h3>
+      {accuracy !== null && (
+        <p className="text-center text-sm text-green-600 font-medium mb-2">
+          Accuracy: {(accuracy * 100).toFixed(2)}%
+        </p>
+      )}
       {results.length > 0 ? (
         <ul className="space-y-2">
           {results.map((result, index) => (
@@ -90,7 +84,9 @@ const SearchBar = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
-      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">Search Word2Vec & TF-IDF</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">
+        Search Word2Vec & TF-IDF
+      </h2>
       <div className="flex flex-col sm:flex-row gap-2 items-center">
         <input
           type="text"
@@ -136,10 +132,8 @@ const SearchBar = () => {
       )}
 
       <div className="mt-6 flex flex-col md:flex-row gap-6">
-        {renderResults(word2vecResults, 'Word2Vec Results')}
-        {renderResults(tfidfResults, 'TF-IDF Results')}
-        {renderResults(doc2vecResults, 'Doc2Vec Results')}
-        {renderResults(bertResults, 'BERT Results')}
+        {renderResults(word2vecResults, 'Word2Vec Results', word2vecAccuracy)}
+        {renderResults(doc2vecResults, 'Doc2Vec Results', doc2vecAccuracy)}
       </div>
     </div>
   );

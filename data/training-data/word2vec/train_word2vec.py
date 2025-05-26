@@ -21,7 +21,7 @@ listOfFiles = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PA
 stop_words = set()
 if REMOVE_STOP_WORDS:
     try:
-        with open(STOP_WORDS_FILE, 'r') as f:
+        with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
             stop_words = set(f.read().splitlines())
     except FileNotFoundError:
         print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
@@ -51,7 +51,7 @@ for file in listOfFiles:
         final_sentences.append(words)
 
 # === Huấn luyện Word2Vec ===
-model = Word2Vec(final_sentences, vector_size=100, window=5, min_count=2, workers=4, sg=1)
+model = Word2Vec(final_sentences, vector_size=100, window=2, min_count=1, workers=4, sg=1)
 
 # === Chuyển sang JSON và lưu ===
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}

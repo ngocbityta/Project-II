@@ -13,7 +13,6 @@ def normalize_sentence(s):
     s = re.sub(r'[.,!?]+$', '', s)
     return s
 
-
 # Hàm tính cosine similarity
 def cosine_similarity(vecA, vecB):
     normA = np.linalg.norm(vecA)
@@ -22,15 +21,26 @@ def cosine_similarity(vecA, vecB):
         return 0.0
     return np.dot(vecA, vecB) / (normA * normB)
 
-# Hàm tính vector trung bình từ dict vectors và danh sách từ
-def average_sentence_vector(sentence, vector_dict):
-    sentence = normalize_sentence(sentence)
-    words = word_tokenize(sentence)
-    word_vectors = [np.array(vector_dict[word]) for word in words if word in vector_dict]
-    if not word_vectors:
-        raise ValueError(f"Không có từ nào trong câu '{sentence}' tồn tại trong vector dictionary.")
+# Hàm đếm số lượng cặp token có độ lệch cosine similarity < epsilon
+def get_similar_tokens(sentenceA, sentenceB, vector_dict, epsilon=0.1):
+    sentenceA = normalize_sentence(sentenceA)
+    sentenceB = normalize_sentence(sentenceB)
+    tokensA = word_tokenize(sentenceA)
+    tokensB = word_tokenize(sentenceB)
 
-    return np.mean(word_vectors, axis=0)
+    count = 0
+    for wordA in tokensA:
+        if wordA not in vector_dict:
+            continue
+        vecA = np.array(vector_dict[wordA])
+        for wordB in tokensB:
+            if wordB not in vector_dict:
+                continue
+            vecB = np.array(vector_dict[wordB])
+            similarity = cosine_similarity(vecA, vecB)
+            if abs(1 - similarity) < epsilon:
+                count += 1
+    return count
 
 def compute_f1_score(true_sentences, predicted_sentences):
     true_set = set([normalize_sentence(s) for s in true_sentences])
@@ -57,21 +67,18 @@ def compute_accuracy(sentence, predicted_sentences):
     return 0.0
 
 if __name__ == "__main__":
-    
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No sentence provided."}))
         sys.exit(1)
 
     sentence = sys.argv[1]
-    
+
     try:
         vector_file_path = os.path.join(CURRENT_DIR, '../../trained-data/word2vec/vector.json')
         with open(vector_file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
-        vectors = data['vectors']
 
-        vec1 = average_sentence_vector(sentence, vectors)
+        vectors = data['vectors']
 
         news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/test_news.txt')
         try:
@@ -85,19 +92,19 @@ if __name__ == "__main__":
 
         for news_sentence in sentences:
             try:
-                vec2 = average_sentence_vector(news_sentence, vectors)
-                similarity = cosine_similarity(vec1, vec2)
-                similarities.append({"cosine_similarity": similarity, "sentence": news_sentence})
+                similarity_count = get_similar_tokens(sentence, news_sentence, vectors, epsilon=0.1)
+                similarities.append({
+                    "token_pair_match_count": similarity_count,
+                    "sentence": news_sentence.strip()
+                })
             except ValueError:
                 continue
 
-        # Sắp xếp các câu theo cosine similarity giảm dần
-        similarities.sort(reverse=True, key=lambda x: x["cosine_similarity"])
+        similarities.sort(reverse=True, key=lambda x: x["token_pair_match_count"])
         top_similar = similarities[:20]
-        
-        # Tính accuracy
+
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
-    
+
         print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False, indent=2))
 
     except Exception as e:

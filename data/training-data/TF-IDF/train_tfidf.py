@@ -9,7 +9,7 @@ from scipy.sparse import save_npz
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.xlsx")
+INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
 VECTORIZER_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_vectorizer.pkl")
 MATRIX_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_matrix.npz")
@@ -47,7 +47,10 @@ def preprocess_text(text):
 
 # === Xử lý dữ liệu ===
 try:
-    df = pd.read_excel(INPUT_PATH)
+    # Đọc từng dòng trong news.txt, loại bỏ dòng trống
+    with open(INPUT_PATH, 'r', encoding='utf-8') as f:
+        titles = [line.strip() for line in f if line.strip()]
+    df = pd.DataFrame({'title': titles})
     df['processed_title'] = df['title'].apply(preprocess_text)
 
     # === Vector hóa TF-IDF ===
