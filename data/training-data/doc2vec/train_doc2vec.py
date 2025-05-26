@@ -16,11 +16,6 @@ RAW_SENTENCES_FILE = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/raw_s
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
 
-VECTOR_SIZE = 100
-WINDOW_SIZE = 5
-MIN_COUNT = 2
-EPOCHS = 20
-WORKERS = 4
 
 # === Tạo thư mục nếu chưa có ===
 os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)

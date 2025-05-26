@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
         # === Sắp xếp và lấy top 10 ===
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
-        top_similar = similarities[:15]
+        top_similar = similarities[:20]
         
         # === Tính accuracy ===
         accuracy = compute_accuracy(sentence, [s["sentence"] for s in top_similar])
