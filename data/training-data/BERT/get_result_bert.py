@@ -3,9 +3,16 @@ import os
 import numpy as np
 import sys
 import torch
+import re
 from transformers import BertTokenizer, BertForMaskedLM
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def normalize_sentence(s):
+    s = s.strip().lower()
+    s = re.sub(r'[.,!?]+$', '', s)
+    return s
+
 
 def cosine_similarity(vecA, vecB):
     normA = np.linalg.norm(vecA)
@@ -24,6 +31,30 @@ def average_sentence_vector(sentence, model, tokenizer):
         last_hidden_states = outputs[0]
         sentence_embedding = last_hidden_states.mean(dim=1).squeeze().cpu().numpy()
     return sentence_embedding
+
+def compute_f1_score(true_sentences, predicted_sentences):
+    true_set = set([normalize_sentence(s) for s in true_sentences])
+    pred_set = set([normalize_sentence(s) for s in predicted_sentences])
+
+    true_positives = len(true_set & pred_set)
+    precision = true_positives / len(pred_set) if pred_set else 0
+    recall = true_positives / len(true_set) if true_set else 0
+
+    if precision + recall == 0:
+        return 0.0
+
+    f1 = 2 * precision * recall / (precision + recall)
+    return f1
+
+def compute_accuracy(sentence, predicted_sentences):
+    valid_data_dir = os.path.join(CURRENT_DIR, '../../valid-data')
+    json_files = glob.glob(os.path.join(valid_data_dir, 'test_*.json'))
+    for file_path in json_files:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if normalize_sentence(data.get('searchText')) == normalize_sentence(sentence):
+                return compute_f1_score(data.get('result'), predicted_sentences)
+    return 0.0
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -61,8 +92,12 @@ if __name__ == "__main__":
                 continue
 
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
-        top_similar = similarities[:10]
-        print(json.dumps({"similarities": top_similar}, ensure_ascii=False))
+        top_similar = similarities[:20]
+        
+        # Tính accuracy
+        accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
+
+        print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

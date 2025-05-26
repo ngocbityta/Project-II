@@ -12,10 +12,8 @@ def run_script(script_path, args=[]):
         if not os.path.exists(script_path):
             return None, f"Script {script_path} not found."
 
-        venv_python = os.path.join(os.path.dirname(__file__), '../venv', 'Scripts', 'python.exe')
-
         result = subprocess.run(
-            [venv_python, script_path] + args,
+            ["python3", script_path] + args,
             capture_output=True,
             text=True
         )
@@ -31,7 +29,6 @@ def run_script(script_path, args=[]):
 
         return parsed_output, None
     except Exception as e:
-        print(f"Error running script {venv_python}")
         print(f"Error running script {script_path}: {str(e)}")
         return None, str(e)
 

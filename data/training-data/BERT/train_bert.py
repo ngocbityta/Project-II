@@ -4,6 +4,7 @@ import json
 from transformers import DistilBertTokenizer, DistilBertForMaskedLM, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from datasets import Dataset
 import torch
+import underthesea
 
 # Paths
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,13 +49,8 @@ for sentence in sentences:
     words = underthesea.word_tokenize(sentence)
     final_sentences.append(" ".join(words))
 
-<<<<<<< Updated upstream
 # Use only first 200 sentences for ultra-fast training
 small_sentences = final_sentences[:200]
-=======
-    # Không dùng underthesea, chỉ giữ nguyên câu đã xử lý
-    final_sentences.extend([s for s in sentences if s])
->>>>>>> Stashed changes
 
 dataset = Dataset.from_dict({"text": small_sentences})
 
