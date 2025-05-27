@@ -63,10 +63,10 @@ model = Doc2Vec(
     window=3,
     min_count=2,
     workers=4,
-    epochs=20,
+    epochs=40,
     dm=0,  # DBOW
-    hs=1,
-    negative=0,
+    hs=0,
+    negative=10,
     dbow_words=1
 )
 

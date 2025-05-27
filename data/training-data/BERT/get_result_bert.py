@@ -64,7 +64,7 @@ if __name__ == "__main__":
     sentence = sys.argv[1]
 
     try:
-        model_path = os.path.join(CURRENT_DIR, '../../trained-data/bert-model')
+        model_path = os.path.join(CURRENT_DIR, '../../trained-data/bert')
         model = BertForMaskedLM.from_pretrained(model_path)
         tokenizer = BertTokenizer.from_pretrained(model_path)
         model.eval()

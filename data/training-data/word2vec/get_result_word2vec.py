@@ -81,19 +81,19 @@ if __name__ == "__main__":
             print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}))
             sys.exit(1)
 
-        similarities = []
+        result = []
 
         for news_sentence in sentences:
             try:
                 vec2 = average_sentence_vector(news_sentence, vectors)
                 similarity = cosine_similarity(vec1, vec2)
-                similarities.append({"cosine_similarity": similarity, "sentence": news_sentence})
+                result.append({"cosine_similarity": similarity, "sentence": news_sentence})
             except ValueError:
                 continue
 
         # Sắp xếp các câu theo cosine similarity giảm dần
-        similarities.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = similarities[:20]
+        result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
+        top_similar = result[:10]
         
         # Tính accuracy
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])

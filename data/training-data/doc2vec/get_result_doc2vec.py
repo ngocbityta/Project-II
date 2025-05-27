@@ -75,18 +75,18 @@ if __name__ == "__main__":
         vec1 = get_vector(sentence, model)
 
         # === Tính cosine similarity với tất cả vector tài liệu ===
-        similarities = []
+        result = []
         for new_sentence in sentences:
             vec2 = get_vector(new_sentence, model)
             similarity = cosine_similarity(vec1, vec2)
-            similarities.append({
+            result.append({
                 "sentence": new_sentence,
                 "cosine_similarity": float(similarity)
             })
 
         # === Sắp xếp và lấy top 10 ===
-        similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
-        top_similar = similarities[:20]
+        result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
+        top_similar = result[:10]
         
         # === Tính accuracy ===
         accuracy = compute_accuracy(sentence, [s["sentence"] for s in top_similar])

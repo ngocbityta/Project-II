@@ -13,9 +13,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === Đường dẫn ===
 STOPWORDS_FILE = os.path.join(CURRENT_DIR, '../../raw-data/stopwords.txt')
-VECTORIZER_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/tfidf_vectorizer.pkl')
-TFIDF_MATRIX_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/tfidf_matrix.npz')
-PROCESSED_DF_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tfidf/processed_news.pkl')
+VECTORIZER_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tf-idf/tfidf_vectorizer.pkl')
+TFIDF_MATRIX_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tf-idf/tfidf_matrix.npz')
+PROCESSED_DF_PATH = os.path.join(CURRENT_DIR, '../../trained-data/tf-idf/processed_news.pkl')
 
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
@@ -107,8 +107,8 @@ def main():
         # Sắp xếp giảm dần
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         
-        # Lấy top 20
-        top_similar = result[:20]
+        # Lấy top 10
+        top_similar = result[:10]
         
         # Tính accuracy
         accuracy = compute_accuracy(query, [item['sentence'] for item in top_similar])

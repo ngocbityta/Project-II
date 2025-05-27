@@ -11,6 +11,8 @@ const SearchBar = () => {
   const [doc2vecAccuracy, setDoc2vecAccuracy] = useState(null);
   const [tfidfResults, setTfidfResults] = useState([]);
   const [tfidfAccuracy, setTfidfAccuracy] = useState(null);
+  const [bm25Results, setBm25Results] = useState([]);
+  const [bm25Accuracy, setBm25Accuracy] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,12 +30,15 @@ const SearchBar = () => {
     setDoc2vecAccuracy(null);
     setTfidfResults([]);
     setTfidfAccuracy(null);
+    setBm25Results([]);
+    setBm25Accuracy(null);
 
     try {
-      const [word2vecRes, doc2vecRes, tfidfRes] = await Promise.all([
+      const [word2vecRes, doc2vecRes, tfidfRes, bm25Res] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-bm25-result`, { sentence: query }),
       ]);
 
       if (word2vecRes.data.output?.similarities) {
@@ -50,10 +55,16 @@ const SearchBar = () => {
         setTfidfAccuracy(tfidfRes.data.output.accuracy ?? null);
       }
 
+      if (bm25Res.data.output?.similarities) {
+        setBm25Results(bm25Res.data.output.similarities);
+        setBm25Accuracy(bm25Res.data.output.accuracy ?? null);
+      }
+
       if (
         !word2vecRes.data.output?.similarities?.length &&
         !doc2vecRes.data.output?.similarities?.length &&
-        !tfidfRes.data.output?.similarities?.length
+        !tfidfRes.data.output?.similarities?.length &&
+        !bm25Res.data.output?.similarities?.length
       ) {
         setMessage('No results found');
       }
@@ -80,9 +91,6 @@ const SearchBar = () => {
               className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
             >
               <p className="font-medium text-gray-700">{result.sentence}</p>
-              <p className="text-sm text-gray-500">
-                Cosine similarity: {result.cosine_similarity.toFixed(3)}
-              </p>
             </li>
           ))}
         </ul>
@@ -93,7 +101,7 @@ const SearchBar = () => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
+    <div className="w-full mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
       <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">
         Search Word2Vec & TF-IDF
       </h2>
@@ -145,6 +153,7 @@ const SearchBar = () => {
         {renderResults(word2vecResults, 'Word2Vec Results', word2vecAccuracy)}
         {renderResults(doc2vecResults, 'Doc2Vec Results', doc2vecAccuracy)}
         {renderResults(tfidfResults, 'TF-IDF Results', tfidfAccuracy)}
+        {renderResults(bm25Results, 'BM25 Results', bm25Accuracy)}
       </div>
     </div>
   );
