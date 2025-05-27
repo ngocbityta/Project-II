@@ -21,7 +21,7 @@ def cosine_similarity(vecA, vecB):
         return 0.0
     return np.dot(vecA, vecB) / (normA * normB)
 
-# Hàm đếm số lượng cặp token có độ lệch cosine similarity < epsilon
+# Hàm đếm số lượng cặp token có độ lệch cosine similarity > 1 - epsilon
 def get_similar_tokens(sentenceA, sentenceB, vector_dict, epsilon=0.1):
     sentenceA = normalize_sentence(sentenceA)
     sentenceB = normalize_sentence(sentenceB)
@@ -38,7 +38,7 @@ def get_similar_tokens(sentenceA, sentenceB, vector_dict, epsilon=0.1):
                 continue
             vecB = np.array(vector_dict[wordB])
             similarity = cosine_similarity(vecA, vecB)
-            if abs(1 - similarity) < epsilon:
+            if similarity > (1 - epsilon):
                 count += 1
     return count
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
         for news_sentence in sentences:
             try:
-                similarity_count = get_similar_tokens(sentence, news_sentence, vectors, epsilon=0.1)
+                similarity_count = get_similar_tokens(sentence, news_sentence, vectors, epsilon=0.5)
                 similarities.append({
                     "token_pair_match_count": similarity_count,
                     "sentence": news_sentence.strip()
