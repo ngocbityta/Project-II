@@ -5,7 +5,12 @@ import os
 import json
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+CORS(app, supports_credentials=True, resources={r"/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "Authorization"],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}})
 
 def run_script(script_path, args=[]):
     try:

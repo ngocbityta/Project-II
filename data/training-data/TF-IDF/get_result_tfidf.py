@@ -5,6 +5,7 @@ import pandas as pd
 import re
 import string
 import sys
+import glob
 from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -31,6 +32,11 @@ if REMOVE_STOP_WORDS:
             "error": f"File {STOPWORDS_FILE} not found. Please ensure the file exists."
         }, ensure_ascii=False))
         sys.exit(1)
+        
+def normalize_sentence(s):
+    s = s.strip().lower()
+    s = re.sub(r'[.,!?]+$', '', s)
+    return s
 
 # === Tiền xử lý truy vấn ===
 def preprocess_text(text):
@@ -44,6 +50,31 @@ def preprocess_text(text):
             text = re.sub(pattern, ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     return text
+
+def compute_f1_score(true_sentences, predicted_sentences):
+    true_set = set([normalize_sentence(s) for s in true_sentences])
+    pred_set = set([normalize_sentence(s) for s in predicted_sentences])
+
+    true_positives = len(true_set & pred_set)
+    precision = true_positives / len(pred_set) if pred_set else 0
+    recall = true_positives / len(true_set) if true_set else 0
+
+    if precision + recall == 0:
+        return 0.0
+
+    f1 = 2 * precision * recall / (precision + recall)
+    return f1
+
+def compute_accuracy(sentence, predicted_sentences):
+    valid_data_dir = os.path.join(CURRENT_DIR, '../../valid-data')
+    json_files = glob.glob(os.path.join(valid_data_dir, 'test_*.json'))
+    for file_path in json_files:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if normalize_sentence(data.get('searchText')) == normalize_sentence(sentence):
+                return compute_f1_score(data.get('result'), predicted_sentences)
+    return 0.0
+
 
 # === Main logic ===
 def main():
@@ -75,8 +106,14 @@ def main():
 
         # Sắp xếp giảm dần
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
+        
+        # Lấy top 20
+        top_similar = result[:20]
+        
+        # Tính accuracy
+        accuracy = compute_accuracy(query, [item['sentence'] for item in top_similar])
 
-        print(json.dumps({"similarities": result}, ensure_ascii=False))
+        print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}), ensure_ascii=False)

@@ -64,12 +64,12 @@ if __name__ == "__main__":
         model_path = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/doc2vec.model")
         model = Doc2Vec.load(model_path)
         
-        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/test_news.txt')
+        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
         try:
             with open(news_file_path, 'r', encoding='utf-8') as file:
                 sentences = file.readlines()
         except FileNotFoundError:
-            print(json.dumps({"error": "Không tìm thấy tệp tin test_news.txt"}))
+            print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}))
             sys.exit(1)
 
         vec1 = get_vector(sentence, model)
