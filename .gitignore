@@ -1,3 +1,6 @@
+#Ignore trained data
+**/trained-data/
+
 # Ignore all .model .npy files
 *.model
 *.npy
