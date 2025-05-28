@@ -4,6 +4,7 @@ import subprocess
 import os
 import json
 import sys
+import concurrent.futures
 
 app = Flask(__name__)
 
@@ -240,5 +241,68 @@ def get_bm25_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
+@app.route('/statistics', methods=['GET'])
+def statistics():
+    try:
+        # Đường dẫn các script get_result
+        script_paths = {
+            "Word2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/get_result_word2vec.py')),
+            "TF-IDF": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py')),
+            "Doc2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/get_result_doc2vec.py')),
+            "BM25": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bm25/get_result_bm25.py')),
+        }
+        # Đọc bộ test
+        valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))
+        import glob
+        test_files = glob.glob(os.path.join(valid_data_dir, 'test_*.json'))
+        tests = []
+        for file in test_files:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                tests.append({"query": data["searchText"], "answers": data["result"]})
+
+        def calc_map(preds, golds):
+            """Tính MAP cho 1 truy vấn"""
+            ap = 0.0
+            num_hits = 0
+            for i, p in enumerate(preds):
+                if p in golds:
+                    num_hits += 1
+                    ap += num_hits / (i + 1)
+            return ap / len(golds) if golds else 0.0
+
+        def run_eval(method, script, test):
+            proc = subprocess.run(
+                [sys.executable, script, test["query"]],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            try:
+                output = json.loads(proc.stdout)
+                preds = [item["sentence"].strip() for item in output.get("similarities", [])]
+                golds = [ans.strip() for ans in test["answers"]]
+                f1 = output.get("accuracy", 0.0)
+                map_score = calc_map(preds, golds)
+                return f1, map_score
+            except Exception:
+                return 0.0, 0.0
+
+        results = {}
+        for method, script in script_paths.items():
+            f1s = []
+            maps = []
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                futures = [executor.submit(run_eval, method, script, test) for test in tests]
+                for future in concurrent.futures.as_completed(futures):
+                    f1, map_score = future.result()
+                    f1s.append(f1)
+                    maps.append(map_score)
+            results[method] = {
+                "f1": sum(f1s) / len(f1s) if f1s else 0.0,
+                "map": sum(maps) / len(maps) if maps else 0.0
+            }
+        return jsonify(results), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to calculate statistics", "details": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(debug=True)
