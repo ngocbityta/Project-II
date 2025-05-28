@@ -7,6 +7,9 @@ import re
 import pickle
 from underthesea import word_tokenize
 
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(CURRENT_DIR, "../../trained-data/bm25/bm25.model")
 

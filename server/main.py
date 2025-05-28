@@ -3,6 +3,7 @@ from flask_cors import CORS
 import subprocess
 import os
 import json
+import sys
 
 app = Flask(__name__)
 
@@ -17,8 +18,9 @@ def run_script(script_path, args=[]):
         if not os.path.exists(script_path):
             return None, f"Script {script_path} not found."
 
+        # Sử dụng đúng python interpreter của venv
         result = subprocess.run(
-            ["python3", script_path] + args,
+            [sys.executable, script_path] + args,
             capture_output=True,
             text=True,
             encoding='utf-8'

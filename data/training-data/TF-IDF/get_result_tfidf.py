@@ -9,6 +9,9 @@ import glob
 from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
 
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # === Đường dẫn ===
@@ -116,7 +119,7 @@ def main():
         print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))
 
     except Exception as e:
-        print(json.dumps({"error": str(e)}), ensure_ascii=False)
+        print(json.dumps({"error": str(e)}, ensure_ascii=False))
         sys.exit(1)
 
 if __name__ == "__main__":

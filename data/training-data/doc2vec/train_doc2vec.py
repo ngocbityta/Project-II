@@ -75,12 +75,12 @@ try:
     model.save(MODEL_PATH)
 
     result = {
-        "message": "✅ Training complete. Model saved.",
+        "message": "Training complete. Model saved.",
         "status": "success"
     }
 except Exception as e:
     result = {
-        "error": "❌ Failed to save model.",
+        "error": "Failed to save model.",
         "details": str(e),
         "status": "fail"
     }

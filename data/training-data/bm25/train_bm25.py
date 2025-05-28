@@ -54,6 +54,9 @@ for file in listOfFiles:
 # === Huấn luyện BM25 ===
 model = BM25Okapi(final_sentences)
 
+# Tạo thư mục output nếu chưa tồn tại
+os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+
 try:
     with open(MODEL_PATH, 'wb') as f:
         pickle.dump(model, f)

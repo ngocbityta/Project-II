@@ -15,6 +15,9 @@ VECTORIZER_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/tfidf_v
 MATRIX_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/tfidf_matrix.npz")
 PROCESSED_DF_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/processed_news.pkl")
 
+# Tạo thư mục output nếu chưa tồn tại
+os.makedirs(os.path.dirname(VECTORIZER_OUTPUT), exist_ok=True)
+
 REMOVE_PUNCTUATION = True
 REMOVE_STOP_WORDS = True
 
