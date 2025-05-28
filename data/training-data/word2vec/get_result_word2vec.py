@@ -5,6 +5,8 @@ import sys
 import glob
 import re
 from underthesea import word_tokenize
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
