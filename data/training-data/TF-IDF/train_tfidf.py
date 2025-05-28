@@ -11,9 +11,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
-VECTORIZER_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_vectorizer.pkl")
-MATRIX_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/tfidf_matrix.npz")
-PROCESSED_DF_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tfidf/processed_news.pkl")
+VECTORIZER_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/tfidf_vectorizer.pkl")
+MATRIX_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/tfidf_matrix.npz")
+PROCESSED_DF_OUTPUT = os.path.join(CURRENT_DIR, "../../trained-data/tf-idf/processed_news.pkl")
 
 REMOVE_PUNCTUATION = True
 REMOVE_STOP_WORDS = True

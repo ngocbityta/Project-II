@@ -11,7 +11,6 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
 MODEL_PATH = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/doc2vec.model")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
-RAW_SENTENCES_FILE = os.path.join(CURRENT_DIR, "../../trained-data/doc2vec/raw_sentences.json")
 
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
@@ -32,7 +31,6 @@ if REMOVE_STOP_WORDS:
 
 # === Load dữ liệu văn bản ===
 documents = []
-raw_sentences = {}
 list_of_files = [INPUT_PATH] if os.path.isfile(INPUT_PATH) else glob.glob(INPUT_PATH + '/*.txt')
 
 if not list_of_files:
@@ -53,7 +51,6 @@ for file_path in list_of_files:
                 words = [w for w in words if w not in stop_words]
             tag = f"doc_{tag_index}"
             documents.append(TaggedDocument(words=words, tags=[tag]))
-            raw_sentences[tag] = line.strip()  # Lưu câu gốc chưa xử lý
             tag_index += 1
 
 if not documents:
@@ -66,26 +63,24 @@ model = Doc2Vec(
     window=3,
     min_count=2,
     workers=4,
-    epochs=20,
+    epochs=40,
     dm=0,  # DBOW
-    hs=1,
-    negative=0,
+    hs=0,
+    negative=10,
     dbow_words=1
 )
 
 # === Lưu mô hình và dữ liệu ===
 try:
     model.save(MODEL_PATH)
-    with open(RAW_SENTENCES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(raw_sentences, f, ensure_ascii=False, indent=2)
 
     result = {
-        "message": "✅ Training complete. Model and raw_sentences saved.",
+        "message": "✅ Training complete. Model saved.",
         "status": "success"
     }
 except Exception as e:
     result = {
-        "error": "❌ Failed to save model or raw_sentences.",
+        "error": "❌ Failed to save model.",
         "details": str(e),
         "status": "fail"
     }

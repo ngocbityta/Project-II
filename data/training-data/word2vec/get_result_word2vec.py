@@ -75,27 +75,27 @@ if __name__ == "__main__":
 
         vec1 = average_sentence_vector(sentence, vectors)
 
-        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/test_news.txt')
+        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
         try:
             with open(news_file_path, 'r', encoding='utf-8') as file:
                 sentences = file.readlines()
         except FileNotFoundError:
-            print(json.dumps({"error": "Không tìm thấy tệp tin test_news.txt"}))
+            print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}))
             sys.exit(1)
 
-        similarities = []
+        result = []
 
         for news_sentence in sentences:
             try:
                 vec2 = average_sentence_vector(news_sentence, vectors)
                 similarity = cosine_similarity(vec1, vec2)
-                similarities.append({"cosine_similarity": similarity, "sentence": news_sentence})
+                result.append({"cosine_similarity": similarity, "sentence": news_sentence})
             except ValueError:
                 continue
 
         # Sắp xếp các câu theo cosine similarity giảm dần
-        similarities.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = similarities[:20]
+        result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
+        top_similar = result[:10]
         
         # Tính accuracy
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])

@@ -1,5 +1,9 @@
-# Ignore all .model files
+#Ignore trained data
+**/trained-data/
+
+# Ignore all .model .npy files
 *.model
+*.npy
 
 # Ignore all vector.json files (regardless of folder)
 vector.json
