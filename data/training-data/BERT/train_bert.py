@@ -1,17 +1,18 @@
 import os
 import re
 import json
-from transformers import DistilBertTokenizer, DistilBertForMaskedLM, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from datasets import Dataset
 import torch
-import underthesea
+from underthesea import word_tokenize
+from sentence_transformers import SentenceTransformer, InputExample, losses, evaluation, models
+from torch.utils.data import DataLoader
 
 # Paths
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_PATH = os.path.join(CURRENT_DIR, "../../raw-data/news.txt")
-OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/bert")
-
+OUTPUT_PATH = os.path.join(CURRENT_DIR, "../../trained-data/sbert")
 STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
 
@@ -32,7 +33,7 @@ if not os.path.isfile(INPUT_PATH):
     print(f"Input file {INPUT_PATH} not found. Please ensure the file exists.")
     exit(1)
 
-# Read and preprocess
+# Read and preprocess sentences
 final_sentences = []
 with open(INPUT_PATH, 'r', encoding='utf-8') as f:
     sentences = f.readlines()
@@ -46,66 +47,48 @@ for i in range(len(sentences)):
     sentences[i] = sentence
 
 for sentence in sentences:
-    words = underthesea.word_tokenize(sentence)
+    words = word_tokenize(sentence)
     final_sentences.append(" ".join(words))
 
-# Use only first 200 sentences for ultra-fast training
+# Use first 200 sentences for quick fine-tuning/demo
 small_sentences = final_sentences[:200]
 
-dataset = Dataset.from_dict({"text": small_sentences})
+# Prepare training - For SBERT fine-tuning
+# Here we create dummy positive pairs by pairing each sentence with itself (can be replaced with real labeled pairs)
+train_examples = [InputExample(texts=[s, s]) for s in small_sentences]
 
-tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-multilingual-cased')
+# Load a multilingual SBERT model pretrained (replace with any Vietnamese SBERT if available)
+model_name = 'sentence-transformers/distiluse-base-multilingual-cased-v1'
+model = SentenceTransformer(model_name)
 
-def tokenize_function(examples):
-    return tokenizer(examples['text'], padding='max_length', truncation=True, max_length=32)
+# DataLoader and Loss function for fine-tuning
+train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=16)
+train_loss = losses.MultipleNegativesRankingLoss(model=model)
 
-tokenized_datasets = dataset.map(tokenize_function, batched=True, num_proc=4)
-
-model = DistilBertForMaskedLM.from_pretrained('distilbert-base-multilingual-cased')
-
-device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+# Training parameters
+num_epochs = 1
+device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
 
-import torch
-
-use_fp16 = torch.cuda.is_available()  # Only use fp16 if CUDA GPU available
-
-training_args = TrainingArguments(
-    output_dir=OUTPUT_PATH,
-    overwrite_output_dir=True,
-    num_train_epochs=1,
-    max_steps=20,
-    per_device_train_batch_size=64,
-    save_steps=1000000,
-    logging_steps=1000,
-    fp16=use_fp16,  # Enable fp16 only if CUDA GPU
-    load_best_model_at_end=False,
+# Fine-tune model
+model.fit(
+    train_objectives=[(train_dataloader, train_loss)],
+    epochs=num_epochs,
+    warmup_steps=10,
+    output_path=OUTPUT_PATH,
+    show_progress_bar=True
 )
 
-
-data_collator = DataCollatorForLanguageModeling(
-    tokenizer=tokenizer, mlm=True, mlm_probability=0.15
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=tokenized_datasets,
-    data_collator=data_collator,
-)
-
-trainer.train()
-
+# Save the fine-tuned model
 try:
-    model.save_pretrained(OUTPUT_PATH)
-    tokenizer.save_pretrained(OUTPUT_PATH)
+    model.save(OUTPUT_PATH)
     result = {
-        "message": "Training complete. BERT model saved.",
+        "message": "SBERT fine-tuning complete. Model saved.",
         "status": "success"
     }
 except Exception as e:
     result = {
-        "error": "Failed to save BERT model",
+        "error": "Failed to save SBERT model",
         "details": str(e),
         "status": "fail"
     }

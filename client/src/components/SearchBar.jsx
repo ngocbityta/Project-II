@@ -15,6 +15,8 @@ const SearchBar = () => {
   const [bm25Accuracy, setBm25Accuracy] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bertResults, setBertResults] = useState([]);
+  const [bertAccuracy, serBertAccuraty] = useState(null);
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -32,13 +34,16 @@ const SearchBar = () => {
     setTfidfAccuracy(null);
     setBm25Results([]);
     setBm25Accuracy(null);
+    setBertResults([]);
+    serBertAccuraty(null);
 
     try {
-      const [word2vecRes, doc2vecRes, tfidfRes, bm25Res] = await Promise.all([
+      const [word2vecRes, doc2vecRes, tfidfRes, bm25Res, bertRes] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
         axios.post(`${API_URL}/get-bm25-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-bert-result`, { sentence: query }),
       ]);
 
       if (word2vecRes.data.output?.similarities) {
@@ -60,11 +65,17 @@ const SearchBar = () => {
         setBm25Accuracy(bm25Res.data.output.accuracy ?? null);
       }
 
+      if (bertRes.data.output?.similarities) {
+        setBm25Results(bertRes.data.output.similarities);
+        setBm25Accuracy(bertRes.data.output.accuracy ?? null);
+      }
+
       if (
         !word2vecRes.data.output?.similarities?.length &&
         !doc2vecRes.data.output?.similarities?.length &&
         !tfidfRes.data.output?.similarities?.length &&
-        !bm25Res.data.output?.similarities?.length
+        !bm25Res.data.output?.similarities?.length &&
+        !bertRes.data.output?.similarities?.length
       ) {
         setMessage('No results found');
       }
@@ -154,6 +165,7 @@ const SearchBar = () => {
         {renderResults(doc2vecResults, 'Doc2Vec Results', doc2vecAccuracy)}
         {renderResults(tfidfResults, 'TF-IDF Results', tfidfAccuracy)}
         {renderResults(bm25Results, 'BM25 Results', bm25Accuracy)}
+        {renderResults(bertResults, 'Bert Results', bertAccuracy)}
       </div>
     </div>
   );
