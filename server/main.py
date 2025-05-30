@@ -21,7 +21,7 @@ def run_script(script_path, args=[]):
 
         # Sử dụng đúng python interpreter của venv
         result = subprocess.run(
-            [sys.executable, script_path] + args,
+            ["python3"] + args,
             capture_output=True,
             text=True,
             encoding='utf-8'
