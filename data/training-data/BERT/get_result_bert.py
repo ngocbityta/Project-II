@@ -2,9 +2,10 @@ import json
 import os
 import numpy as np
 import sys
-import torch
 import re
-from transformers import BertTokenizer, BertForMaskedLM
+import glob
+import torch
+from sentence_transformers import SentenceTransformer
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -13,7 +14,6 @@ def normalize_sentence(s):
     s = re.sub(r'[.,!?]+$', '', s)
     return s
 
-
 def cosine_similarity(vecA, vecB):
     normA = np.linalg.norm(vecA)
     normB = np.linalg.norm(vecB)
@@ -21,16 +21,6 @@ def cosine_similarity(vecA, vecB):
         return 0.0
     dot_product = np.dot(vecA, vecB)
     return dot_product / (normA * normB)
-
-def average_sentence_vector(sentence, model, tokenizer):
-    # Không dùng underthesea, chỉ dùng tokenizer của BERT
-    sentence = sentence.lower()
-    inputs = tokenizer(sentence, return_tensors="pt", padding=True, truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)
-        last_hidden_states = outputs[0]
-        sentence_embedding = last_hidden_states.mean(dim=1).squeeze().cpu().numpy()
-    return sentence_embedding
 
 def compute_f1_score(true_sentences, predicted_sentences):
     true_set = set([normalize_sentence(s) for s in true_sentences])
@@ -64,12 +54,12 @@ if __name__ == "__main__":
     sentence = sys.argv[1]
 
     try:
-        model_path = os.path.join(CURRENT_DIR, '../../trained-data/bert')
-        model = BertForMaskedLM.from_pretrained(model_path)
-        tokenizer = BertTokenizer.from_pretrained(model_path)
+        model_path = os.path.join(CURRENT_DIR, '../../trained-data/sbert')  # path to your fine-tuned SBERT model
+        model = SentenceTransformer(model_path)
         model.eval()
 
-        vec1 = average_sentence_vector(sentence, model, tokenizer)
+        # Encode query sentence to vector (batch_size=1, convert_to_numpy)
+        vec1 = model.encode(sentence, convert_to_numpy=True, device='cuda' if torch.cuda.is_available() else 'cpu')
 
         news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
         try:
@@ -85,16 +75,19 @@ if __name__ == "__main__":
             if not news_sentence:
                 continue
             try:
-                vec2 = average_sentence_vector(news_sentence, model, tokenizer)
+                vec2 = model.encode(news_sentence, convert_to_numpy=True,
+                                    device='cuda' if torch.cuda.is_available() else 'cpu')
                 similarity = cosine_similarity(vec1, vec2)
-                similarities.append({"cosine_similarity": similarity, "sentence": news_sentence})
+                similarities.append({
+                    "cosine_similarity": float(similarity),
+                    "sentence": news_sentence
+                })
             except Exception:
                 continue
 
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         top_similar = similarities[:20]
-        
-        # Tính accuracy
+
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
 
         print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))
