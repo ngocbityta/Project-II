@@ -15,6 +15,10 @@ STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
 REMOVE_STOP_WORDS = True
 REMOVE_PUNCTUATION = True
 
+def normalize_sentence(s):
+    s = s.strip().lower()
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
+    return s
 
 # === Tạo thư mục nếu chưa có ===
 os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
@@ -45,7 +49,7 @@ for file_path in list_of_files:
             if not sentence:
                 continue
             if REMOVE_PUNCTUATION:
-                sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
+                sentence = normalize_sentence(sentence)
             words = underthesea.word_tokenize(sentence)
             if REMOVE_STOP_WORDS:
                 words = [w for w in words if w not in stop_words]
