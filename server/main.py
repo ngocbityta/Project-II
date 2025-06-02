@@ -241,28 +241,6 @@ def get_bm25_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
-@app.route('/get-tfidf-bert-result', methods=['POST'])
-def get_tfidf_bert_result():
-    try:
-        data = request.get_json() if request.is_json else {}
-        sentence = data.get('sentence', '')
-        alpha = float(data.get('alpha', 0.8))
-        if not sentence:
-            return jsonify({"error": "Sentence is required"}), 400
-
-        # Đường dẫn này phải đúng với file đã có:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py'))
-        args = [sentence, str(alpha)]
-        result, error = run_script(script_path, args)
-        if error:
-            return jsonify({"error": "Failed to get TF-IDF+BERT result", "details": error}), 500
-
-        return jsonify({
-            "message": "TF-IDF+BERT result obtained successfully",
-            "output": result
-        }), 200
-    except Exception as e:
-        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
 STATISTICS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/statistics.json'))
 
@@ -302,7 +280,7 @@ def statistics_recalculate():
             "Doc2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/get_result_doc2vec.py')),
             "BM25": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bm25/get_result_bm25.py')),
             "BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py')),
-            "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
+            # "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
         }
         # Đọc bộ test
         valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))
@@ -364,6 +342,28 @@ def statistics_recalculate():
         return jsonify(stats), 200
     except Exception as e:
         return jsonify({"error": "Failed to calculate statistics", "details": str(e)}), 500
+
+@app.route('/get-tfidf-bert-result', methods=['POST'])
+def get_tfidf_bert_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+        alpha = float(data.get('alpha', 0.8))
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py'))
+        args = [sentence, str(alpha)]
+        result, error = run_script(script_path, args)
+        if error:
+            return jsonify({"error": "Failed to get TF-IDF+BERT result", "details": error}), 500
+
+        return jsonify({
+            "message": "TF-IDF+BERT result obtained successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
