@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 continue
 
         result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = [item for item in result if item["cosine_similarity"] > 0.5][:20]
+        top_similar = [item for item in result if item["cosine_similarity"] > 0.5][:15]
 
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
         print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False, indent=2))

@@ -120,7 +120,7 @@ if __name__ == "__main__":
             })
 
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
-        top_similar = [item for item in result if item["cosine_similarity"] > 0.53][:20]
+        top_similar = [item for item in result if item["cosine_similarity"] > 0.53][:15]
         
         # === Tính accuracy ===
         accuracy = compute_accuracy(sentence, [s["sentence"] for s in top_similar])

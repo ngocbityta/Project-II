@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
         # Sắp xếp các câu theo cosine similarity giảm dần
         result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = [item for item in result if item["cosine_similarity"] > 6.5][:20]
+        top_similar = [item for item in result if item["cosine_similarity"] > 6.5][:15]
 
         
         # Tính accuracy
