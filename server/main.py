@@ -295,7 +295,6 @@ def statistics():
 @app.route('/statistics/recalculate', methods=['POST'])
 def statistics_recalculate():
     try:
-        # Đường dẫn các script get_result
         script_paths = {
             "Word2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/word2vec/get_result_word2vec.py')),
             "TF-IDF": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py')),
@@ -304,7 +303,7 @@ def statistics_recalculate():
             "BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py')),
             "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
         }
-        # Đọc bộ test
+
         valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))
         import glob
         import datetime
@@ -313,17 +312,18 @@ def statistics_recalculate():
         for file in test_files:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                tests.append({"query": data["searchText"], "answers": data["result"]})
+                tests.append({"query": data["searchText"], "answers": [ans.strip() for ans in data["result"]]})
 
         def calc_map(preds, golds):
-            """Tính MAP cho 1 truy vấn"""
+            if not golds:
+                return 0.0
             ap = 0.0
             num_hits = 0
-            for i, p in enumerate(preds):
-                if p in golds:
+            for i, pred in enumerate(preds):
+                if pred in golds:
                     num_hits += 1
                     ap += num_hits / (i + 1)
-            return ap / len(golds) if golds else 0.0
+            return ap / len(golds)
 
         def run_eval(method, script, test):
             proc = subprocess.run(
@@ -333,7 +333,7 @@ def statistics_recalculate():
             try:
                 output = json.loads(proc.stdout)
                 preds = [item["sentence"].strip() for item in output.get("similarities", [])]
-                golds = [ans.strip() for ans in test["answers"]]
+                golds = test["answers"]
                 f1 = output.get("accuracy", 0.0)
                 map_score = calc_map(preds, golds)
                 return f1, map_score
@@ -354,7 +354,7 @@ def statistics_recalculate():
                 "f1": sum(f1s) / len(f1s) if f1s else 0.0,
                 "map": sum(maps) / len(maps) if maps else 0.0
             }
-        # Thêm thời gian tính toán gần nhất
+
         now = datetime.datetime.now().isoformat()
         stats = {
             "results": results,
