@@ -52,7 +52,7 @@ for file in listOfFiles:
         final_sentences.append(words)
 
 # === Huấn luyện BM25 ===
-model = BM25Okapi(final_sentences)
+model = BM25Okapi(final_sentences, b = 0, k = 1.2)
 
 # Tạo thư mục output nếu chưa tồn tại
 os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)

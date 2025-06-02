@@ -66,8 +66,8 @@ const SearchBar = () => {
       }
 
       if (bertRes.data.output?.similarities) {
-        setBm25Results(bertRes.data.output.similarities);
-        setBm25Accuracy(bertRes.data.output.accuracy ?? null);
+        setBertResults(bertRes.data.output.similarities);
+        serBertAccuraty(bertRes.data.output.accuracy ?? null);
       }
 
       if (

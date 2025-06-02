@@ -21,7 +21,7 @@ def run_script(script_path, args=[]):
 
         # Sử dụng đúng python interpreter của venv
         result = subprocess.run(
-            ["python3"] + args,
+            [sys.executable, script_path] + args,
             capture_output=True,
             text=True,
             encoding='utf-8'
@@ -164,7 +164,7 @@ def get_doc2vec_result():
 @app.route('/train-bert-model', methods=['POST'])
 def train_bert_model():
     try:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bert/train_bert.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/train_bert.py'))
 
         result, error = run_script(script_path)
 
@@ -177,7 +177,7 @@ def train_bert_model():
         }), 200
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
-    
+
 @app.route('/get-bert-result', methods=['POST'])
 def get_bert_result():
     try:
@@ -187,7 +187,7 @@ def get_bert_result():
         if not sentence:
             return jsonify({"error": "Sentence is required"}), 400
 
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bert/get_result_bert.py'))
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py'))
 
         result, error = run_script(script_path, [sentence])
 
