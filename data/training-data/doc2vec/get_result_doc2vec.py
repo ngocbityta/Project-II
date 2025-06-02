@@ -10,11 +10,41 @@ import io
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+REMOVE_STOP_WORDS = True
+
+stop_words = set()
+if REMOVE_STOP_WORDS:
+    try:
+        with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
+            stop_words = set(f.read().splitlines())
+    except FileNotFoundError:
+        print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
+        exit(1)
 
 def normalize_sentence(s):
+    # Loại bỏ ký tự xuống dòng, tab
+    s = s.replace('\n', ' ').replace('\t', ' ')
+    
+    # Loại bỏ khoảng trắng đầu/cuối và chuyển về chữ thường
     s = s.strip().lower()
-    s = re.sub(r'[.,!?]+$', '', s)
+    
+    # Loại bỏ toàn bộ ký tự không phải chữ cái, số hoặc khoảng trắng
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
+    
+    # Loại bỏ stop words
+    s = ' '.join([word for word in s.split() if word not in stop_words])
+    
     return s
+
+def get_common_token_count(sentence1, sentence2):
+    sentence1 = normalize_sentence(sentence1)
+    sentence2 = normalize_sentence(sentence2)
+    tokens1 = set(word_tokenize(sentence1))
+    tokens2 = set(word_tokenize(sentence2))
+    if len(tokens1) <= 3 or len(tokens2) <= 3:
+        return 2
+    return len(tokens1 & tokens2)
 
 def cosine_similarity(vecA, vecB):
     dot_product = np.dot(vecA, vecB)
@@ -49,12 +79,13 @@ def compute_accuracy(sentence, predicted_sentences):
     return None  # Không trùng test nào thì trả về None
 
 
-def get_vector(sentence, model):
+def get_vector(sentence):
     tokens = word_tokenize(normalize_sentence(sentence))
-    inferred_vector = model.infer_vector(tokens)
+    inferred_vector = model.infer_vector(tokens, alpha=0.025, min_alpha=0.0001, epochs=50)
     return inferred_vector
 
 if __name__ == "__main__":
+    model = {}
     if len(sys.argv) < 2:
         print(json.dumps({"error": "No sentence provided."}))
         sys.exit(1)
@@ -74,21 +105,22 @@ if __name__ == "__main__":
             print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}))
             sys.exit(1)
 
-        vec1 = get_vector(sentence, model)
+        vec1 = get_vector(sentence)
 
         # === Tính cosine similarity với tất cả vector tài liệu ===
         result = []
         for new_sentence in sentences:
-            vec2 = get_vector(new_sentence, model)
+            if get_common_token_count(sentence, new_sentence) == 0:
+                continue
+            vec2 = get_vector(new_sentence)
             similarity = cosine_similarity(vec1, vec2)
             result.append({
                 "sentence": new_sentence,
                 "cosine_similarity": float(similarity)
             })
 
-        # === Sắp xếp và lấy top 10 ===
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
-        top_similar = result[:10]
+        top_similar = [item for item in result if item["cosine_similarity"] > 0.53][:20]
         
         # === Tính accuracy ===
         accuracy = compute_accuracy(sentence, [s["sentence"] for s in top_similar])

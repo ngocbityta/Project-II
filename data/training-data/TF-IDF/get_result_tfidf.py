@@ -38,7 +38,7 @@ if REMOVE_STOP_WORDS:
         
 def normalize_sentence(s):
     s = s.strip().lower()
-    s = re.sub(r'[.,!?]+$', '', s)
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
     return s
 
 # === Tiền xử lý truy vấn ===
@@ -82,11 +82,12 @@ def compute_accuracy(sentence, predicted_sentences):
 # === Main logic ===
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "No query provided."}, ensure_ascii=False))
+        print(json.dumps({"error": "No sentence provided."}))
         sys.exit(1)
 
+    query = sys.argv[1]
+
     try:
-        query = sys.argv[1]
         processed_query = preprocess_text(query)
 
         # Load vectorizer, tfidf matrix, và dataframe
@@ -111,7 +112,7 @@ def main():
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         
         # Lấy top 10
-        top_similar = result[:10]
+        top_similar = [item for item in result if item["cosine_similarity"] > 0.35][:20]
         
         # Tính accuracy
         accuracy = compute_accuracy(query, [item['sentence'] for item in top_similar])

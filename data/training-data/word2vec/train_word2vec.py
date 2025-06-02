@@ -26,6 +26,21 @@ if REMOVE_STOP_WORDS:
     except FileNotFoundError:
         print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
         exit(1)
+        
+def normalize_sentence(s):
+    # Loại bỏ ký tự xuống dòng, tab
+    s = s.replace('\n', ' ').replace('\t', ' ')
+    
+    # Loại bỏ khoảng trắng đầu/cuối và chuyển về chữ thường
+    s = s.strip().lower()
+    
+    # Loại bỏ toàn bộ ký tự không phải chữ cái, số hoặc khoảng trắng
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
+    
+    # Loại bỏ stop words
+    s = ' '.join([word for word in s.split() if word not in stop_words])
+    
+    return s
 
 # === Tiền xử lý và tách từ ===
 final_sentences = []
@@ -40,7 +55,7 @@ for file in listOfFiles:
         sentence = sentences[i].strip()
         sentence = sentence.lower() 
         if REMOVE_PUNCTUATION:
-            sentence = re.sub(r'[^\w\s\u00C0-\u1EF9]', '', sentence, flags=re.UNICODE)
+            sentence = normalize_sentence(sentence)
         if REMOVE_STOP_WORDS:
             sentence = ' '.join([word for word in sentence.split() if word not in stop_words])
         sentences[i] = sentence
@@ -51,7 +66,7 @@ for file in listOfFiles:
         final_sentences.append(words)
 
 # === Huấn luyện Word2Vec ===
-model = Word2Vec(final_sentences, vector_size=100, window=2, min_count=1, workers=4, sg=1)
+model = Word2Vec(final_sentences, vector_size=50, window=4, min_count = 1, workers=4, sg=1, epochs=30)
 
 # === Chuyển sang JSON và lưu ===
 vectors = {"vectors": {word: model.wv[word].tolist() for word in model.wv.index_to_key}}

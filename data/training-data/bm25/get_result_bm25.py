@@ -12,11 +12,40 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(CURRENT_DIR, "../../trained-data/bm25/bm25.model")
+STOP_WORDS_FILE = os.path.join(CURRENT_DIR, "../../raw-data/stopwords.txt")
+REMOVE_STOP_WORDS = True
+
+stop_words = set()
+if REMOVE_STOP_WORDS:
+    try:
+        with open(STOP_WORDS_FILE, 'r', encoding='utf-8') as f:
+            stop_words = set(f.read().splitlines())
+    except FileNotFoundError:
+        print(f"File {STOP_WORDS_FILE} not found. Please ensure the file exists.")
+        exit(1)
 
 def normalize_sentence(s):
+    # Loại bỏ ký tự xuống dòng, tab
+    s = s.replace('\n', ' ').replace('\t', ' ')
+    
+    # Loại bỏ khoảng trắng đầu/cuối và chuyển về chữ thường
     s = s.strip().lower()
-    s = re.sub(r'[.,!?]+$', '', s)
+    
+    # Loại bỏ toàn bộ ký tự không phải chữ cái, số hoặc khoảng trắng
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
+    
+    # Loại bỏ stop words
+    s = ' '.join([word for word in s.split() if word not in stop_words])
+    
     return s
+
+def get_common_token_count(sentence1, sentence2):
+    sentence1 = normalize_sentence(sentence1)
+    sentence2 = normalize_sentence(sentence2)
+    tokens1 = set(word_tokenize(sentence1))
+    tokens2 = set(word_tokenize(sentence2))
+    
+    return len(tokens1 & tokens2)
 
 def compute_f1_score(true_sentences, predicted_sentences):
     true_set = set([normalize_sentence(s) for s in true_sentences])
@@ -70,6 +99,8 @@ if __name__ == "__main__":
         result = []
 
         for i, news_sentence in enumerate(sentences):
+            if get_common_token_count(sentence, news_sentence) < 1:
+                continue
             try:
                 similarity = scores[i]
                 result.append({
@@ -81,7 +112,8 @@ if __name__ == "__main__":
 
         # Sắp xếp các câu theo cosine similarity giảm dần
         result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = result[:10]
+        top_similar = [item for item in result if item["cosine_similarity"] > 6.5][:20]
+
         
         # Tính accuracy
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
