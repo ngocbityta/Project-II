@@ -4,6 +4,7 @@ import subprocess
 import os
 import json
 import sys
+import re
 import concurrent.futures
 
 app = Flask(__name__)
@@ -269,6 +270,18 @@ def statistics():
         return jsonify(stats), 200
     except Exception as e:
         return jsonify({"error": "Failed to load statistics", "details": str(e)}), 500
+    
+def normalize_sentence(s):
+    # Loại bỏ ký tự xuống dòng, tab
+    s = s.replace('\n', ' ').replace('\t', ' ')
+    
+    # Loại bỏ khoảng trắng đầu/cuối và chuyển về chữ thường
+    s = s.strip().lower()
+    
+    # Loại bỏ toàn bộ ký tự không phải chữ cái, số hoặc khoảng trắng
+    s = re.sub(r'[^\w\s]', '', s, flags=re.UNICODE)
+    
+    return s
 
 @app.route('/statistics/recalculate', methods=['POST'])
 def statistics_recalculate():
@@ -292,16 +305,23 @@ def statistics_recalculate():
                 data = json.load(f)
                 tests.append({"query": data["searchText"], "answers": [ans.strip() for ans in data["result"]]})
 
-        def calc_map(preds, golds):
+        def calc_map(preds, golds, top_k=10):
             if not golds:
                 return 0.0
+
+            # Normalize golds trước
+            norm_golds = [normalize_sentence(g) for g in golds]
+
             ap = 0.0
             num_hits = 0
-            for i, pred in enumerate(preds):
-                if pred in golds:
+
+            for i, pred in enumerate(preds[:top_k]):
+                norm_pred = normalize_sentence(pred)
+                if norm_pred in norm_golds:
                     num_hits += 1
                     ap += num_hits / (i + 1)
-            return ap / len(golds)
+
+            return ap / len(norm_golds)
 
         def run_eval(method, script, test):
             proc = subprocess.run(
@@ -328,6 +348,7 @@ def statistics_recalculate():
                     f1, map_score = future.result()
                     f1s.append(f1)
                     maps.append(map_score)
+                    
             results[method] = {
                 "f1": sum(f1s) / len(f1s) if f1s else 0.0,
                 "map": sum(maps) / len(maps) if maps else 0.0
