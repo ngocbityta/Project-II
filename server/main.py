@@ -241,6 +241,55 @@ def get_bm25_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
+@app.route('/get-tfidf-bert-result', methods=['POST'])
+def get_tfidf_bert_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+        alpha = float(data.get('alpha', 0.5))
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        # Call TF-IDF
+        tfidf_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py'))
+        tfidf_result, tfidf_error = run_script(tfidf_script, [sentence])
+        if tfidf_error:
+            return jsonify({"error": "Failed to get TF-IDF result", "details": tfidf_error}), 500
+
+        # Call BERT
+        bert_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py'))
+        bert_result, bert_error = run_script(bert_script, [sentence])
+        if bert_error:
+            return jsonify({"error": "Failed to get BERT result", "details": bert_error}), 500
+
+        # Extract scores and sentences
+        tfidf_sim = {item['sentence'].strip(): item['score'] for item in tfidf_result.get('similarities', [])}
+        bert_sim = {item['sentence'].strip(): item['score'] for item in bert_result.get('similarities', [])}
+
+        all_sentences = set(tfidf_sim.keys()) | set(bert_sim.keys())
+        combined = []
+        for sent in all_sentences:
+            tfidf_score = tfidf_sim.get(sent, 0.0)
+            bert_score = bert_sim.get(sent, 0.0)
+            final_score = alpha * tfidf_score + (1 - alpha) * bert_score
+            combined.append({
+                "sentence": sent,
+                "tfidf_score": tfidf_score,
+                "bert_score": bert_score,
+                "final_score": final_score
+            })
+        # Sort by final_score descending
+        combined.sort(key=lambda x: x["final_score"], reverse=True)
+
+        return jsonify({
+            "message": "TF-IDF+BERT result obtained successfully",
+            "output": {
+                "similarities": combined
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
+    
 STATISTICS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/statistics.json'))
 
 def save_statistics(data):

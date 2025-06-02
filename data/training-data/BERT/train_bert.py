@@ -77,11 +77,8 @@ try:
         words = word_tokenize(sentence)
         final_sentences.append(" ".join(words))
 
-    # Use first 200 sentences for quick fine-tuning/demo
-    small_sentences = final_sentences[:200]
-
-    # Prepare training - For SBERT fine-tuning
-    train_examples = [InputExample(texts=[s, s]) for s in small_sentences]
+    # Dùng toàn bộ dữ liệu để train (không lấy tập nhỏ nữa)
+    train_examples = [InputExample(texts=[s, s]) for s in final_sentences]
 
     # Load a multilingual SBERT model pretrained (replace with any Vietnamese SBERT if available)
     model_name = 'sentence-transformers/distiluse-base-multilingual-cased-v1'
