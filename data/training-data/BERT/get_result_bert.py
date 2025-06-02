@@ -50,7 +50,7 @@ def compute_accuracy(sentence, predicted_sentences):
             data = json.load(f)
             if normalize_sentence(data.get('searchText')) == normalize_sentence(sentence):
                 return compute_f1_score(data.get('result'), predicted_sentences)
-    return 0.0
+    return None  # Không trùng test nào thì trả về None
 
 
 if __name__ == "__main__":
@@ -66,6 +66,17 @@ if __name__ == "__main__":
             print(json.dumps({"error": f"Model directory {model_path} not found."}, ensure_ascii=False))
             sys.exit(1)
 
+        # Load vector và câu đã encode sẵn
+        vectors_path = os.path.join(model_path, "sbert_vectors.npy")
+        sentences_path = os.path.join(model_path, "sbert_sentences.json")
+        if not (os.path.isfile(vectors_path) and os.path.isfile(sentences_path)):
+            print(json.dumps({"error": "Không tìm thấy file vector hoặc sentences đã encode. Hãy train lại BERT."}, ensure_ascii=False))
+            sys.exit(1)
+        news_vectors = np.load(vectors_path)
+        with open(sentences_path, "r", encoding="utf-8") as f:
+            news_sentences = json.load(f)
+
+        # Load model chỉ để encode câu truy vấn
         try:
             model = SentenceTransformer(model_path)
             model.eval()
@@ -73,54 +84,30 @@ if __name__ == "__main__":
             print(json.dumps({"error": f"Failed to load SBERT model: {str(e)}"}, ensure_ascii=False))
             sys.exit(1)
 
-        # Đọc tiêu đề từ file
-        news_file_path = os.path.join(CURRENT_DIR, '../../raw-data/news.txt')
-        try:
-            with open(news_file_path, 'r', encoding='utf-8') as file:
-                raw_sentences = file.readlines()
-        except FileNotFoundError:
-            print(json.dumps({"error": "Không tìm thấy tệp tin news.txt"}, ensure_ascii=False))
-            sys.exit(1)
-
-        # Làm sạch dữ liệu: bỏ trống, trùng lặp
-        cleaned_sentences = list(set([s.strip() for s in raw_sentences if s.strip()]))
-
-        if not cleaned_sentences:
-            print(json.dumps({"error": "Danh sách tiêu đề rỗng sau khi lọc."}, ensure_ascii=False))
-            sys.exit(1)
-
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-        # Batch encode các tiêu đề
-        sentence_embeddings = model.encode(
-            cleaned_sentences,
-            convert_to_numpy=True,
-            batch_size=32,
-            show_progress_bar=True,
-            device=device
-        )
-
-        # Encode câu truy vấn
         query_embedding = model.encode(
             sentence,
             convert_to_numpy=True,
             device=device
         )
 
-        # Tính cosine similarity
+        # Tính cosine similarity với toàn bộ vector đã lưu
+        dot_products = np.dot(news_vectors, query_embedding)
+        norms = np.linalg.norm(news_vectors, axis=1) * np.linalg.norm(query_embedding)
+        cosine_similarities = dot_products / (norms + 1e-8)
+
+        # Ghép lại kết quả
         similarities = [
             {
-                "cosine_similarity": cosine_similarity(query_embedding, emb),
+                "cosine_similarity": float(sim),
                 "sentence": sent
             }
-            for sent, emb in zip(cleaned_sentences, sentence_embeddings)
+            for sent, sim in zip(news_sentences, cosine_similarities)
         ]
 
-        # Sắp xếp theo độ tương đồng giảm dần
         similarities.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         top_similar = similarities[:10]
 
-        # Tính độ chính xác (nếu dữ liệu test phù hợp)
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
 
         print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))

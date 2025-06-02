@@ -3,6 +3,7 @@ import re
 import json
 import shutil
 import sys
+import numpy as np
 from datasets import Dataset
 import torch
 from underthesea import word_tokenize
@@ -107,13 +108,24 @@ try:
     # Save the fine-tuned model
     try:
         model.save(OUTPUT_PATH)
+        # Encode toàn bộ news.txt thành vector và lưu lại
+        news_file = INPUT_PATH
+        with open(news_file, 'r', encoding='utf-8') as f:
+            news_sentences = [line.strip() for line in f if line.strip()]
+        # Loại trùng lặp, rỗng
+        news_sentences = list(dict.fromkeys(news_sentences))
+        news_vectors = model.encode(news_sentences, convert_to_numpy=True, batch_size=32, show_progress_bar=True, device=device)
+        # Lưu vector nhị phân và câu gốc
+        np.save(os.path.join(OUTPUT_PATH, "sbert_vectors.npy"), news_vectors)
+        with open(os.path.join(OUTPUT_PATH, "sbert_sentences.json"), "w", encoding="utf-8") as f:
+            json.dump(news_sentences, f, ensure_ascii=False, indent=2)
         result = {
-            "message": "SBERT fine-tuning complete. Model saved.",
+            "message": "SBERT fine-tuning complete. Model and vectors saved.",
             "status": "success"
         }
     except Exception as e:
         result = {
-            "error": "Failed to save SBERT model",
+            "error": "Failed to save SBERT model or vectors",
             "details": str(e),
             "status": "fail"
         }

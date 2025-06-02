@@ -46,7 +46,7 @@ def compute_accuracy(sentence, predicted_sentences):
             data = json.load(f)
             if normalize_sentence(data.get('searchText')) == normalize_sentence(sentence):
                 return compute_f1_score(data.get('result'), predicted_sentences)
-    return 0.0
+    return None  # Không trùng test nào thì trả về None
 
 
 def get_vector(sentence, model):
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         # === Tính accuracy ===
         accuracy = compute_accuracy(sentence, [s["sentence"] for s in top_similar])
 
-        print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False, indent=2))
+        print(json.dumps({"similarities": top_similar, "accuracy": accuracy}, ensure_ascii=False))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

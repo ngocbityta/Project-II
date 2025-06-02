@@ -241,8 +241,36 @@ def get_bm25_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
+STATISTICS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/statistics.json'))
+
+def save_statistics(data):
+    try:
+        with open(STATISTICS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Failed to save statistics: {e}")
+
+def load_statistics():
+    if os.path.exists(STATISTICS_FILE):
+        try:
+            with open(STATISTICS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
+
 @app.route('/statistics', methods=['GET'])
 def statistics():
+    try:
+        stats = load_statistics()
+        if stats is None:
+            return jsonify({"error": "No statistics available. Please recalculate."}), 404
+        return jsonify(stats), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to load statistics", "details": str(e)}), 500
+
+@app.route('/statistics/recalculate', methods=['POST'])
+def statistics_recalculate():
     try:
         # Đường dẫn các script get_result
         script_paths = {
@@ -254,6 +282,7 @@ def statistics():
         # Đọc bộ test
         valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))
         import glob
+        import datetime
         test_files = glob.glob(os.path.join(valid_data_dir, 'test_*.json'))
         tests = []
         for file in test_files:
@@ -300,7 +329,14 @@ def statistics():
                 "f1": sum(f1s) / len(f1s) if f1s else 0.0,
                 "map": sum(maps) / len(maps) if maps else 0.0
             }
-        return jsonify(results), 200
+        # Thêm thời gian tính toán gần nhất
+        now = datetime.datetime.now().isoformat()
+        stats = {
+            "results": results,
+            "last_calculated": now
+        }
+        save_statistics(stats)
+        return jsonify(stats), 200
     except Exception as e:
         return jsonify({"error": "Failed to calculate statistics", "details": str(e)}), 500
 

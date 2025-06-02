@@ -89,7 +89,7 @@ const SearchBar = () => {
   const renderResults = (results, title, accuracy) => (
     <div className="w-full md:w-1/2">
       <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">{title}</h3>
-      {accuracy !== null && (
+      {accuracy !== null && accuracy !== undefined && (
         <p className="text-center text-sm text-green-600 font-medium mb-2">
           F1 Score: {(accuracy * 100).toFixed(2)}
         </p>
@@ -114,7 +114,7 @@ const SearchBar = () => {
   return (
     <div className="w-full mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
       <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">
-        Search Word2Vec & TF-IDF
+        Search Bar
       </h2>
       <div className="flex flex-col sm:flex-row gap-2 items-center">
         <input

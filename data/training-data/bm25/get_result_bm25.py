@@ -40,7 +40,7 @@ def compute_accuracy(sentence, predicted_sentences):
             data = json.load(f)
             if normalize_sentence(data.get('searchText')) == normalize_sentence(sentence):
                 return compute_f1_score(data.get('result'), predicted_sentences)
-    return 0.0
+    return None  # Không trùng test nào thì trả về None
 
 if __name__ == "__main__":
     
