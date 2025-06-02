@@ -44,11 +44,13 @@ def compute_accuracy(sentence, predicted_sentences):
 
 if __name__ == "__main__":
     
-    if len(sys.argv) < 2:
-       print(json.dumps({"error": "No sentence provided."}))
-       sys.exit(1)
+    # if len(sys.argv) < 2:
+    #  print(json.dumps({"error": "No sentence provided."}))
+    #   sys.exit(1)
 
-    sentence = sys.argv[1]
+    # sentence = sys.argv[1]
+    
+    sentence = "Lễ hội thu hút du khách"
 
     sentence_words = word_tokenize(normalize_sentence(sentence))
     
@@ -81,7 +83,8 @@ if __name__ == "__main__":
 
         # Sắp xếp các câu theo cosine similarity giảm dần
         result.sort(reverse=True, key=lambda x: x["cosine_similarity"])
-        top_similar = result[:10]
+        top_similar = [item for item in result if item["cosine_similarity"] > 6.5][:20]
+
         
         # Tính accuracy
         accuracy = compute_accuracy(sentence, [item['sentence'] for item in top_similar])
