@@ -246,46 +246,20 @@ def get_tfidf_bert_result():
     try:
         data = request.get_json() if request.is_json else {}
         sentence = data.get('sentence', '')
-        alpha = float(data.get('alpha', 0.5))
+        alpha = float(data.get('alpha', 0.8))
         if not sentence:
             return jsonify({"error": "Sentence is required"}), 400
 
-        # Call TF-IDF
-        tfidf_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py'))
-        tfidf_result, tfidf_error = run_script(tfidf_script, [sentence])
-        if tfidf_error:
-            return jsonify({"error": "Failed to get TF-IDF result", "details": tfidf_error}), 500
-
-        # Call BERT
-        bert_script = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py'))
-        bert_result, bert_error = run_script(bert_script, [sentence])
-        if bert_error:
-            return jsonify({"error": "Failed to get BERT result", "details": bert_error}), 500
-
-        # Extract scores and sentences
-        tfidf_sim = {item['sentence'].strip(): item['score'] for item in tfidf_result.get('similarities', [])}
-        bert_sim = {item['sentence'].strip(): item['score'] for item in bert_result.get('similarities', [])}
-
-        all_sentences = set(tfidf_sim.keys()) | set(bert_sim.keys())
-        combined = []
-        for sent in all_sentences:
-            tfidf_score = tfidf_sim.get(sent, 0.0)
-            bert_score = bert_sim.get(sent, 0.0)
-            final_score = alpha * tfidf_score + (1 - alpha) * bert_score
-            combined.append({
-                "sentence": sent,
-                "tfidf_score": tfidf_score,
-                "bert_score": bert_score,
-                "final_score": final_score
-            })
-        # Sort by final_score descending
-        combined.sort(key=lambda x: x["final_score"], reverse=True)
+        # Đường dẫn này phải đúng với file đã có:
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py'))
+        args = [sentence, str(alpha)]
+        result, error = run_script(script_path, args)
+        if error:
+            return jsonify({"error": "Failed to get TF-IDF+BERT result", "details": error}), 500
 
         return jsonify({
             "message": "TF-IDF+BERT result obtained successfully",
-            "output": {
-                "similarities": combined
-            }
+            "output": result
         }), 200
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
@@ -327,6 +301,8 @@ def statistics_recalculate():
             "TF-IDF": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/tf-idf/get_result_tfidf.py')),
             "Doc2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/get_result_doc2vec.py')),
             "BM25": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bm25/get_result_bm25.py')),
+            "BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py')),
+            "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
         }
         # Đọc bộ test
         valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))

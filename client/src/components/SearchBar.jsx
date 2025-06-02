@@ -17,6 +17,8 @@ const SearchBar = () => {
   const [loading, setLoading] = useState(false);
   const [bertResults, setBertResults] = useState([]);
   const [bertAccuracy, serBertAccuraty] = useState(null);
+  const [tfidfBertResults, setTfidfBertResults] = useState([]);
+  const [tfidfBertAccuracy, setTfidfBertAccuracy] = useState(null); // Thêm state cho F1 Score
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -36,6 +38,8 @@ const SearchBar = () => {
     setBm25Accuracy(null);
     setBertResults([]);
     serBertAccuraty(null);
+    setTfidfBertResults([]);
+    setTfidfBertAccuracy(null); // Reset F1 Score
 
     try {
       const [word2vecRes, doc2vecRes, tfidfRes, bm25Res, bertRes] = await Promise.all([
@@ -54,7 +58,7 @@ const SearchBar = () => {
       if (doc2vecRes.data.output?.similarities) {
         setDoc2vecResults(doc2vecRes.data.output.similarities);
         setDoc2vecAccuracy(doc2vecRes.data.output.accuracy ?? null);
-      }
+      } 
       if (tfidfRes.data.output?.similarities) {
         setTfidfResults(tfidfRes.data.output.similarities);
         setTfidfAccuracy(tfidfRes.data.output.accuracy ?? null);
@@ -68,6 +72,44 @@ const SearchBar = () => {
       if (bertRes.data.output?.similarities) {
         setBertResults(bertRes.data.output.similarities);
         serBertAccuraty(bertRes.data.output.accuracy ?? null);
+      }
+
+      // TF-IDF+BERT
+      if (tfidfRes.data.output?.similarities && bertRes.data.output?.similarities) {
+        const alpha = 0.8;
+        const tfidfDict = {};
+        tfidfRes.data.output.similarities.forEach(item => {
+          const sent = (item.sentence ?? '').trim();
+          tfidfDict[sent] = typeof item.score === 'number' ? item.score : (item.cosine_similarity ?? 0);
+        });
+        const bertDict = {};
+        bertRes.data.output.similarities.forEach(item => {
+          const sent = (item.sentence ?? '').trim();
+          bertDict[sent] = typeof item.score === 'number' ? item.score : (item.cosine_similarity ?? 0);
+        });
+        const allSentences = Array.from(new Set([...Object.keys(tfidfDict), ...Object.keys(bertDict)]));
+        const combined = allSentences.map(sent => {
+          const tfidf_score = tfidfDict[sent] ?? 0;
+          const bert_score = bertDict[sent] ?? 0;
+          const final_score = alpha * tfidf_score + (1 - alpha) * bert_score;
+          return {
+            sentence: sent,
+            final_score,
+          };
+        });
+        combined.sort((a, b) => b.final_score - a.final_score);
+        // Lấy top 20 câu (không hiện điểm)
+        const topCombined = combined.slice(0, 20);
+        setTfidfBertResults(topCombined);
+
+        // Tính F1 Score cho TF-IDF+BERT
+        // Gọi lại API get-tfidf-bert-result để lấy accuracy (F1)
+        try {
+          const tfidfBertRes = await axios.post(`${API_URL}/get-tfidf-bert-result`, { sentence: query });
+          setTfidfBertAccuracy(tfidfBertRes.data.output?.accuracy ?? null);
+        } catch {
+          setTfidfBertAccuracy(null);
+        }
       }
 
       if (
@@ -102,6 +144,32 @@ const SearchBar = () => {
               className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
             >
               <p className="font-medium text-gray-700">{result.sentence}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        !loading && <p className="text-gray-500 text-center">No results</p>
+      )}
+    </div>
+  );
+
+  // Cột TF-IDF+BERT: chỉ hiển thị danh sách câu, có F1 Score
+  const renderTfidfBertResults = (results, accuracy) => (
+    <div className="w-full md:w-1/2">
+      <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">TF-IDF + BERT</h3>
+      {accuracy !== null && accuracy !== undefined && (
+        <p className="text-center text-sm text-green-600 font-medium mb-2">
+          F1 Score: {(accuracy * 100).toFixed(2)}
+        </p>
+      )}
+      {results.length > 0 ? (
+        <ul className="space-y-2">
+          {results.map((item, idx) => (
+            <li
+              key={idx}
+              className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
+            >
+              <p className="font-medium text-gray-700">{item.sentence}</p>
             </li>
           ))}
         </ul>
@@ -166,6 +234,7 @@ const SearchBar = () => {
         {renderResults(tfidfResults, 'TF-IDF Results', tfidfAccuracy)}
         {renderResults(bm25Results, 'BM25 Results', bm25Accuracy)}
         {renderResults(bertResults, 'Bert Results', bertAccuracy)}
+        {renderTfidfBertResults(tfidfBertResults, tfidfBertAccuracy)}
       </div>
     </div>
   );
