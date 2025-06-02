@@ -348,7 +348,7 @@ def get_tfidf_bert_result():
     try:
         data = request.get_json() if request.is_json else {}
         sentence = data.get('sentence', '')
-        alpha = float(data.get('alpha', 0.8))
+        alpha = float(data.get('alpha', 0.7))
         if not sentence:
             return jsonify({"error": "Sentence is required"}), 400
 
