@@ -234,7 +234,7 @@ const SearchBar = () => {
         {renderResults(tfidfResults, 'TF-IDF Results', tfidfAccuracy)}
         {renderResults(bm25Results, 'BM25 Results', bm25Accuracy)}
         {renderResults(bertResults, 'Bert Results', bertAccuracy)}
-        {renderTfidfBertResults(tfidfBertResults, tfidfBertAccuracy)}
+        {/* {renderTfidfBertResults(tfidfBertResults, tfidfBertAccuracy)} */}
       </div>
     </div>
   );
