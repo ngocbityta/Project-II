@@ -111,8 +111,7 @@ def main():
         # Sắp xếp giảm dần
         result.sort(key=lambda x: x["cosine_similarity"], reverse=True)
         
-        # Lấy top 10
-        top_similar = [item for item in result if item["cosine_similarity"] > 0][:20]
+        top_similar = [item for item in result if item["cosine_similarity"] > 0.25][:15]
         
         # Tính accuracy
         accuracy = compute_accuracy(query, [item['sentence'] for item in top_similar])
