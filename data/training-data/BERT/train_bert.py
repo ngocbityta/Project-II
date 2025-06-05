@@ -81,7 +81,7 @@ try:
     train_examples = [InputExample(texts=[s, s]) for s in final_sentences]
 
     # Load a multilingual SBERT model pretrained (replace with any Vietnamese SBERT if available)
-    model_name = 'sentence-transformers/distiluse-base-multilingual-cased-v1'
+    model_name = "VoVanPhuc/sup-SimCSE-VietNamese-phobert-base"
     model = SentenceTransformer(model_name)
 
     # DataLoader and Loss function for fine-tuning

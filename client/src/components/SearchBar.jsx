@@ -99,7 +99,7 @@ const SearchBar = () => {
       <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">{title}</h3>
       {accuracy !== null && accuracy !== undefined && (
         <p className="text-center text-sm text-green-600 font-medium mb-2">
-          F1 Score: {(accuracy * 100).toFixed(2)}
+          F1 Score: {accuracy.toFixed(3)}
         </p>
       )}
       {results.filter(r => r.sentence && r.sentence.trim()).length > 0 ? (

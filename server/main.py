@@ -292,7 +292,7 @@ def statistics_recalculate():
             "Doc2Vec": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/doc2vec/get_result_doc2vec.py')),
             "BM25": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/bm25/get_result_bm25.py')),
             "BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/BERT/get_result_bert.py')),
-            # "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
+            "TF-IDF+BERT": os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py')),
         }
 
         valid_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/valid-data'))
