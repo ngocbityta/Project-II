@@ -77,9 +77,9 @@ const StatisticsPage = () => {
                 <tr key={method}>
                   <td className="py-2 px-4 border font-semibold">{method}</td>
                   <td className="py-2 px-4 border">
-                    {(values.f1 * 100).toFixed(2)}
+                    {values.f1.toFixed(3)}
                   </td>
-                  <td className="py-2 px-4 border">{values.map.toFixed(2)}</td>
+                  <td className="py-2 px-4 border">{values.map.toFixed(3)}</td>
                 </tr>
               ))}
           </tbody>

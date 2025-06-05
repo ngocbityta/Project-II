@@ -242,28 +242,6 @@ def get_bm25_result():
     except Exception as e:
         return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
-@app.route('/get-tfidf-bert-result', methods=['POST'])
-def get_tfidf_bert_result():
-    try:
-        data = request.get_json() if request.is_json else {}
-        sentence = data.get('sentence', '')
-        alpha = float(data.get('alpha', 0.8))
-        if not sentence:
-            return jsonify({"error": "Sentence is required"}), 400
-
-        # Đường dẫn này phải đúng với file đã có:
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py'))
-        args = [sentence, str(alpha)]
-        result, error = run_script(script_path, args)
-        if error:
-            return jsonify({"error": "Failed to get TF-IDF+BERT result", "details": error}), 500
-
-        return jsonify({
-            "message": "TF-IDF+BERT result obtained successfully",
-            "output": result
-        }), 200
-    except Exception as e:
-        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
     
 STATISTICS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/statistics.json'))
 
@@ -385,6 +363,28 @@ def statistics_recalculate():
         return jsonify(stats), 200
     except Exception as e:
         return jsonify({"error": "Failed to calculate statistics", "details": str(e)}), 500
+
+@app.route('/get-tfidf-bert-result', methods=['POST'])
+def get_tfidf_bert_result():
+    try:
+        data = request.get_json() if request.is_json else {}
+        sentence = data.get('sentence', '')
+        alpha = float(data.get('alpha', 0.7))
+        if not sentence:
+            return jsonify({"error": "Sentence is required"}), 400
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../data/training-data/TF-IDF+BERT/get_result_tfidf_bert.py'))
+        args = [sentence, str(alpha)]
+        result, error = run_script(script_path, args)
+        if error:
+            return jsonify({"error": "Failed to get TF-IDF+BERT result", "details": error}), 500
+
+        return jsonify({
+            "message": "TF-IDF+BERT result obtained successfully",
+            "output": result
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "Exception occurred", "details": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

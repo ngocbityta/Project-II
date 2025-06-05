@@ -15,6 +15,10 @@ const SearchBar = () => {
   const [bm25Accuracy, setBm25Accuracy] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bertResults, setBertResults] = useState([]);
+  const [bertAccuracy, setBertAccuraty] = useState(null);
+  const [tfidfBertResults, setTfidfBertResults] = useState([]);
+  const [tfidfBertAccuracy, setTfidfBertAccuracy] = useState(null);
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -32,13 +36,26 @@ const SearchBar = () => {
     setTfidfAccuracy(null);
     setBm25Results([]);
     setBm25Accuracy(null);
+    setBertResults([]);
+    setBertAccuraty(null);
+    setTfidfBertResults([]);
+    setTfidfBertAccuracy(null);
 
     try {
-      const [word2vecRes, doc2vecRes, tfidfRes, bm25Res] = await Promise.all([
+      const [
+        word2vecRes,
+        doc2vecRes,
+        tfidfRes,
+        bm25Res,
+        bertRes,
+        tfidfBertRes
+      ] = await Promise.all([
         axios.post(`${API_URL}/get-word2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-doc2vec-result`, { sentence: query }),
         axios.post(`${API_URL}/get-tfidf-result`, { sentence: query }),
         axios.post(`${API_URL}/get-bm25-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-bert-result`, { sentence: query }),
+        axios.post(`${API_URL}/get-tfidf-bert-result`, { sentence: query, alpha: 0.7 }),
       ]);
 
       if (word2vecRes.data.output?.similarities) {
@@ -60,14 +77,16 @@ const SearchBar = () => {
         setBm25Accuracy(bm25Res.data.output.accuracy ?? null);
       }
 
-      if (
-        !word2vecRes.data.output?.similarities?.length &&
-        !doc2vecRes.data.output?.similarities?.length &&
-        !tfidfRes.data.output?.similarities?.length &&
-        !bm25Res.data.output?.similarities?.length
-      ) {
-        setMessage('No results found');
+      if (bertRes.data.output?.similarities) {
+        setBertResults(bertRes.data.output.similarities);
+        setBertAccuraty(bertRes.data.output.accuracy ?? null);
       }
+
+      if (tfidfBertRes.data.output?.similarities) {
+        setTfidfBertResults(tfidfBertRes.data.output.similarities);
+        setTfidfBertAccuracy(tfidfBertRes.data.output.accuracy ?? null);
+      }
+      
     } catch (error) {
       setMessage(`Error searching data: ${error.message}`);
     } finally {
@@ -80,17 +99,17 @@ const SearchBar = () => {
       <h3 className="text-lg font-semibold mb-2 text-center text-gray-700">{title}</h3>
       {accuracy !== null && accuracy !== undefined && (
         <p className="text-center text-sm text-green-600 font-medium mb-2">
-          F1 Score: {(accuracy * 100).toFixed(2)}
+          F1 Score: {accuracy.toFixed(3)}
         </p>
       )}
-      {results.length > 0 ? (
+      {results.filter(r => r.sentence && r.sentence.trim()).length > 0 ? (
         <ul className="space-y-2">
-          {results.map((result, index) => (
+          {results.filter(r => r.sentence && r.sentence.trim()).map((result, index) => (
             <li
               key={index}
               className="bg-gray-100 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-200 transition"
             >
-              <p className="font-medium text-gray-700">{result.sentence}</p>
+              <p className="font-medium text-gray-700">{result.sentence.trim()}</p>
             </li>
           ))}
         </ul>
@@ -99,6 +118,7 @@ const SearchBar = () => {
       )}
     </div>
   );
+
   return (
     <div className="w-full mx-auto p-4 bg-white rounded-2xl shadow-md mt-10">
       <h2 className="text-2xl font-semibold mb-4 text-center text-gray-800">
@@ -153,6 +173,8 @@ const SearchBar = () => {
         {renderResults(doc2vecResults, 'Doc2Vec Results', doc2vecAccuracy)}
         {renderResults(tfidfResults, 'TF-IDF Results', tfidfAccuracy)}
         {renderResults(bm25Results, 'BM25 Results', bm25Accuracy)}
+        {renderResults(bertResults, 'BERT Results', bertAccuracy)}
+        {renderResults(tfidfBertResults, 'TF-IDF + BERT Results', tfidfBertAccuracy)}
       </div>
     </div>
   );
